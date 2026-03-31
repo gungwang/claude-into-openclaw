@@ -129,7 +129,11 @@ pub struct GrepSearchOutput {
     pub applied_offset: Option<usize>,
 }
 
-pub fn read_file(path: &str, offset: Option<usize>, limit: Option<usize>) -> io::Result<ReadFileOutput> {
+pub fn read_file(
+    path: &str,
+    offset: Option<usize>,
+    limit: Option<usize>,
+) -> io::Result<ReadFileOutput> {
     let absolute_path = normalize_path(path)?;
     let content = fs::read_to_string(&absolute_path)?;
     let lines: Vec<&str> = content.lines().collect();
@@ -173,14 +177,25 @@ pub fn write_file(path: &str, content: &str) -> io::Result<WriteFileOutput> {
     })
 }
 
-pub fn edit_file(path: &str, old_string: &str, new_string: &str, replace_all: bool) -> io::Result<EditFileOutput> {
+pub fn edit_file(
+    path: &str,
+    old_string: &str,
+    new_string: &str,
+    replace_all: bool,
+) -> io::Result<EditFileOutput> {
     let absolute_path = normalize_path(path)?;
     let original_file = fs::read_to_string(&absolute_path)?;
     if old_string == new_string {
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "old_string and new_string must differ"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "old_string and new_string must differ",
+        ));
     }
     if !original_file.contains(old_string) {
-        return Err(io::Error::new(io::ErrorKind::NotFound, "old_string not found in file"));
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "old_string not found in file",
+        ));
     }
 
     let updated = if replace_all {
@@ -204,7 +219,10 @@ pub fn edit_file(path: &str, old_string: &str, new_string: &str, replace_all: bo
 
 pub fn glob_search(pattern: &str, path: Option<&str>) -> io::Result<GlobSearchOutput> {
     let started = Instant::now();
-    let base_dir = path.map(normalize_path).transpose()?.unwrap_or(std::env::current_dir()?);
+    let base_dir = path
+        .map(normalize_path)
+        .transpose()?
+        .unwrap_or(std::env::current_dir()?);
     let search_pattern = if Path::new(pattern).is_absolute() {
         pattern.to_owned()
     } else {
@@ -212,7 +230,8 @@ pub fn glob_search(pattern: &str, path: Option<&str>) -> io::Result<GlobSearchOu
     };
 
     let mut matches = Vec::new();
-    let entries = glob::glob(&search_pattern).map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error.to_string()))?;
+    let entries = glob::glob(&search_pattern)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error.to_string()))?;
     for entry in entries.flatten() {
         if entry.is_file() {
             matches.push(entry);
@@ -255,9 +274,17 @@ pub fn grep_search(input: &GrepSearchInput) -> io::Result<GrepSearchOutput> {
         .build()
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error.to_string()))?;
 
-    let glob_filter = input.glob.as_deref().map(Pattern::new).transpose().map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error.to_string()))?;
+    let glob_filter = input
+        .glob
+        .as_deref()
+        .map(Pattern::new)
+        .transpose()
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error.to_string()))?;
     let file_type = input.file_type.as_deref();
-    let output_mode = input.output_mode.clone().unwrap_or_else(|| String::from("files_with_matches"));
+    let output_mode = input
+        .output_mode
+        .clone()
+        .unwrap_or_else(|| String::from("files_with_matches"));
     let context = input.context.or(input.context_short).unwrap_or(0);
 
     let mut filenames = Vec::new();
@@ -312,7 +339,8 @@ pub fn grep_search(input: &GrepSearchInput) -> io::Result<GrepSearchOutput> {
         }
     }
 
-    let (filenames, applied_limit, applied_offset) = apply_limit(filenames, input.head_limit, input.offset);
+    let (filenames, applied_limit, applied_offset) =
+        apply_limit(filenames, input.head_limit, input.offset);
     let content = if output_mode == "content" {
         let (lines, limit, offset) = apply_limit(content_lines, input.head_limit, input.offset);
         return Ok(GrepSearchOutput {
@@ -348,7 +376,8 @@ fn collect_search_files(base_path: &Path) -> io::Result<Vec<PathBuf>> {
 
     let mut files = Vec::new();
     for entry in WalkDir::new(base_path) {
-        let entry = entry.map_err(|error| io::Error::new(io::ErrorKind::Other, error.to_string()))?;
+        let entry =
+            entry.map_err(|error| io::Error::new(io::ErrorKind::Other, error.to_string()))?;
         if entry.file_type().is_file() {
             files.push(entry.path().to_path_buf());
         }
@@ -356,7 +385,11 @@ fn collect_search_files(base_path: &Path) -> io::Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-fn matches_optional_filters(path: &Path, glob_filter: Option<&Pattern>, file_type: Option<&str>) -> bool {
+fn matches_optional_filters(
+    path: &Path,
+    glob_filter: Option<&Pattern>,
+    file_type: Option<&str>,
+) -> bool {
     if let Some(glob_filter) = glob_filter {
         let path_string = path.to_string_lossy();
         if !glob_filter.matches(&path_string) && !glob_filter.matches_path(path) {
@@ -374,7 +407,11 @@ fn matches_optional_filters(path: &Path, glob_filter: Option<&Pattern>, file_typ
     true
 }
 
-fn apply_limit<T>(items: Vec<T>, limit: Option<usize>, offset: Option<usize>) -> (Vec<T>, Option<usize>, Option<usize>) {
+fn apply_limit<T>(
+    items: Vec<T>,
+    limit: Option<usize>,
+    offset: Option<usize>,
+) -> (Vec<T>, Option<usize>, Option<usize>) {
     let offset_value = offset.unwrap_or(0);
     let mut items = items.into_iter().skip(offset_value).collect::<Vec<_>>();
     let explicit_limit = limit.unwrap_or(250);
@@ -430,7 +467,9 @@ fn normalize_path_allow_missing(path: &str) -> io::Result<PathBuf> {
     }
 
     if let Some(parent) = candidate.parent() {
-        let canonical_parent = parent.canonicalize().unwrap_or_else(|_| parent.to_path_buf());
+        let canonical_parent = parent
+            .canonicalize()
+            .unwrap_or_else(|_| parent.to_path_buf());
         if let Some(name) = candidate.file_name() {
             return Ok(canonical_parent.join(name));
         }
@@ -456,18 +495,22 @@ mod tests {
     #[test]
     fn reads_and_writes_files() {
         let path = temp_path("read-write.txt");
-        let write_output = write_file(path.to_string_lossy().as_ref(), "one\ntwo\nthree").expect("write should succeed");
+        let write_output = write_file(path.to_string_lossy().as_ref(), "one\ntwo\nthree")
+            .expect("write should succeed");
         assert_eq!(write_output.kind, "create");
 
-        let read_output = read_file(path.to_string_lossy().as_ref(), Some(1), Some(1)).expect("read should succeed");
+        let read_output = read_file(path.to_string_lossy().as_ref(), Some(1), Some(1))
+            .expect("read should succeed");
         assert_eq!(read_output.file.content, "two");
     }
 
     #[test]
     fn edits_file_contents() {
         let path = temp_path("edit.txt");
-        write_file(path.to_string_lossy().as_ref(), "alpha beta alpha").expect("initial write should succeed");
-        let output = edit_file(path.to_string_lossy().as_ref(), "alpha", "omega", true).expect("edit should succeed");
+        write_file(path.to_string_lossy().as_ref(), "alpha beta alpha")
+            .expect("initial write should succeed");
+        let output = edit_file(path.to_string_lossy().as_ref(), "alpha", "omega", true)
+            .expect("edit should succeed");
         assert!(output.replace_all);
     }
 
@@ -476,9 +519,14 @@ mod tests {
         let dir = temp_path("search-dir");
         std::fs::create_dir_all(&dir).expect("directory should be created");
         let file = dir.join("demo.rs");
-        write_file(file.to_string_lossy().as_ref(), "fn main() {\n println!(\"hello\");\n}\n").expect("file write should succeed");
+        write_file(
+            file.to_string_lossy().as_ref(),
+            "fn main() {\n println!(\"hello\");\n}\n",
+        )
+        .expect("file write should succeed");
 
-        let globbed = glob_search("**/*.rs", Some(dir.to_string_lossy().as_ref())).expect("glob should succeed");
+        let globbed = glob_search("**/*.rs", Some(dir.to_string_lossy().as_ref()))
+            .expect("glob should succeed");
         assert_eq!(globbed.num_files, 1);
 
         let grep_output = grep_search(&GrepSearchInput {

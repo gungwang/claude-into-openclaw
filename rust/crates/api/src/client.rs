@@ -41,14 +41,12 @@ impl AnthropicClient {
     }
 
     pub fn from_env() -> Result<Self, ApiError> {
-        Ok(Self::new(read_api_key(|key| std::env::var(key))?)
-            .with_auth_token(std::env::var("ANTHROPIC_AUTH_TOKEN").ok())
-            .with_base_url(
-                std::env::var("ANTHROPIC_BASE_URL")
-                    .ok()
-                    .or_else(|| std::env::var("CLAUDE_CODE_API_BASE_URL").ok())
-                    .unwrap_or_else(|| DEFAULT_BASE_URL.to_string()),
-            ))
+        Ok(Self::new(read_api_key()?).with_base_url(
+            std::env::var("ANTHROPIC_BASE_URL")
+                .ok()
+                .or_else(|| std::env::var("CLAUDE_CODE_API_BASE_URL").ok())
+                .unwrap_or_else(|| DEFAULT_BASE_URL.to_string()),
+        ))
     }
 
     #[must_use]
@@ -187,13 +185,16 @@ impl AnthropicClient {
     }
 }
 
-fn read_api_key(
-    getter: impl FnOnce(&str) -> Result<String, std::env::VarError>,
-) -> Result<String, ApiError> {
-    match getter("ANTHROPIC_API_KEY") {
-        Ok(api_key) if api_key.is_empty() => Err(ApiError::MissingApiKey),
-        Ok(api_key) => Ok(api_key),
-        Err(std::env::VarError::NotPresent) => Err(ApiError::MissingApiKey),
+fn read_api_key() -> Result<String, ApiError> {
+    match std::env::var("ANTHROPIC_AUTH_TOKEN") {
+        Ok(api_key) if !api_key.is_empty() => Ok(api_key),
+        Ok(_) => Err(ApiError::MissingApiKey),
+        Err(std::env::VarError::NotPresent) => match std::env::var("ANTHROPIC_API_KEY") {
+            Ok(api_key) if !api_key.is_empty() => Ok(api_key),
+            Ok(_) => Err(ApiError::MissingApiKey),
+            Err(std::env::VarError::NotPresent) => Err(ApiError::MissingApiKey),
+            Err(error) => Err(ApiError::from(error)),
+        },
         Err(error) => Err(ApiError::from(error)),
     }
 }
@@ -289,8 +290,6 @@ struct AnthropicErrorBody {
 
 #[cfg(test)]
 mod tests {
-    use std::env::VarError;
-
     use super::{ALT_REQUEST_ID_HEADER, REQUEST_ID_HEADER};
     use std::time::Duration;
 
@@ -298,21 +297,30 @@ mod tests {
 
     #[test]
     fn read_api_key_requires_presence() {
-        let error = super::read_api_key(|_| Err(VarError::NotPresent))
-            .expect_err("missing key should error");
+        std::env::remove_var("ANTHROPIC_AUTH_TOKEN");
+        std::env::remove_var("ANTHROPIC_API_KEY");
+        let error = super::read_api_key().expect_err("missing key should error");
         assert!(matches!(error, crate::error::ApiError::MissingApiKey));
     }
 
     #[test]
     fn read_api_key_requires_non_empty_value() {
-        let error = super::read_api_key(|_| Ok(String::new())).expect_err("empty key should error");
+        std::env::set_var("ANTHROPIC_AUTH_TOKEN", "");
+        std::env::remove_var("ANTHROPIC_API_KEY");
+        let error = super::read_api_key().expect_err("empty key should error");
         assert!(matches!(error, crate::error::ApiError::MissingApiKey));
     }
 
     #[test]
-    fn with_auth_token_drops_empty_values() {
-        let client = super::AnthropicClient::new("test-key").with_auth_token(Some(String::new()));
-        assert!(client.auth_token.is_none());
+    fn read_api_key_prefers_auth_token() {
+        std::env::set_var("ANTHROPIC_AUTH_TOKEN", "auth-token");
+        std::env::set_var("ANTHROPIC_API_KEY", "legacy-key");
+        assert_eq!(
+            super::read_api_key().expect("token should load"),
+            "auth-token"
+        );
+        std::env::remove_var("ANTHROPIC_AUTH_TOKEN");
+        std::env::remove_var("ANTHROPIC_API_KEY");
     }
 
     #[test]

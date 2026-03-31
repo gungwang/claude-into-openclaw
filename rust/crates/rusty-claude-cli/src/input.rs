@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::io::{self, IsTerminal, Write};
 
 use crossterm::cursor::MoveToColumn;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
@@ -100,6 +100,10 @@ impl LineEditor {
     }
 
     pub fn read_line(&self) -> io::Result<Option<String>> {
+        if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
+            return self.read_line_fallback();
+        }
+
         enable_raw_mode()?;
         let mut stdout = io::stdout();
         let mut input = InputBuffer::new();
@@ -123,6 +127,23 @@ impl LineEditor {
                 }
             }
         }
+    }
+
+    fn read_line_fallback(&self) -> io::Result<Option<String>> {
+        let mut stdout = io::stdout();
+        write!(stdout, "{}", self.prompt)?;
+        stdout.flush()?;
+
+        let mut buffer = String::new();
+        let bytes_read = io::stdin().read_line(&mut buffer)?;
+        if bytes_read == 0 {
+            return Ok(None);
+        }
+
+        while matches!(buffer.chars().last(), Some('\n' | '\r')) {
+            buffer.pop();
+        }
+        Ok(Some(buffer))
     }
 
     fn handle_key(key: KeyEvent, input: &mut InputBuffer) -> EditorAction {

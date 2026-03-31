@@ -64,6 +64,11 @@ pub enum InputContentBlock {
     Text {
         text: String,
     },
+    ToolUse {
+        id: String,
+        name: String,
+        input: Value,
+    },
     ToolResult {
         tool_use_id: String,
         content: Vec<ToolResultContentBlock>,
@@ -135,6 +140,10 @@ pub enum OutputContentBlock {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Usage {
     pub input_tokens: u32,
+    #[serde(default)]
+    pub cache_creation_input_tokens: u32,
+    #[serde(default)]
+    pub cache_read_input_tokens: u32,
     pub output_tokens: u32,
 }
 

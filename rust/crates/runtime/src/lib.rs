@@ -1,13 +1,16 @@
+mod bash;
 mod bootstrap;
 mod compact;
 mod config;
 mod conversation;
+mod file_ops;
 mod json;
 mod permissions;
 mod prompt;
 mod session;
 mod usage;
 
+pub use bash::{execute_bash, BashCommandInput, BashCommandOutput};
 pub use bootstrap::{BootstrapPhase, BootstrapPlan};
 pub use compact::{
     compact_session, estimate_session_tokens, format_compact_summary,
@@ -20,6 +23,11 @@ pub use config::{
 pub use conversation::{
     ApiClient, ApiRequest, AssistantEvent, ConversationRuntime, RuntimeError, StaticToolExecutor,
     ToolError, ToolExecutor, TurnSummary,
+};
+pub use file_ops::{
+    edit_file, glob_search, grep_search, read_file, write_file, EditFileOutput, GlobSearchOutput,
+    GrepSearchInput, GrepSearchOutput, ReadFileOutput, StructuredPatchHunk, TextFilePayload,
+    WriteFileOutput,
 };
 pub use permissions::{
     PermissionMode, PermissionOutcome, PermissionPolicy, PermissionPromptDecision,

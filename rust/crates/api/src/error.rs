@@ -50,11 +50,14 @@ impl Display for ApiError {
             Self::MissingApiKey => {
                 write!(
                     f,
-                    "ANTHROPIC_API_KEY is not set; export it before calling the Anthropic API"
+                    "ANTHROPIC_AUTH_TOKEN or ANTHROPIC_API_KEY is not set; export one before calling the Anthropic API"
                 )
             }
             Self::InvalidApiKeyEnv(error) => {
-                write!(f, "failed to read ANTHROPIC_API_KEY: {error}")
+                write!(
+                    f,
+                    "failed to read ANTHROPIC_AUTH_TOKEN / ANTHROPIC_API_KEY: {error}"
+                )
             }
             Self::Http(error) => write!(f, "http error: {error}"),
             Self::Io(error) => write!(f, "io error: {error}"),
