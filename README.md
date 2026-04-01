@@ -1,16 +1,7 @@
-# Rewriting Project Claw Code
-
-<p align="center">
-  <img src="assets/clawd-hero.jpeg" alt="Claw" width="300" />
-</p>
-
-<p align="center">
-  <strong>Better Harness Tools, not merely storing the archive of leaked Claude Code</strong>
-</p>
 
 ---
 
-## Purpose
+## Purpose: Claude-code => OpenClaw
 
 This repository serves as a bridge between Claude Code's architectural insights and OpenClaw's agent platform. By analyzing Claude Code's tool/command inventory, agent harness patterns, and runtime structures, we aim to enhance OpenClaw with:
 
@@ -25,6 +16,11 @@ This work combines Claude Code features, functionality, and architectural patter
 
 ---
 
+# Rewriting Project Claw Code
+
+<p align="center">
+  <strong>Better Harness Tools, not merely storing the archive of leaked Claude Code</strong>
+</p>
 
 > [!IMPORTANT]
 > **Rust port is now in progress** on the [`dev/rust`](https://github.com/instructkr/claw-code/tree/dev/rust) branch and is expected to be merged into main today. The Rust implementation aims to deliver a faster, memory-safe harness runtime. Stay tuned — this will be the definitive version of the project.
