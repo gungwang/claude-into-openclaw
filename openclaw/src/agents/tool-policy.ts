@@ -1,4 +1,7 @@
 import {
+  createPolicyDecision,
+} from "./policy-reason-codes.js";
+import {
   expandToolGroups,
   normalizeToolList,
   normalizeToolName,
@@ -20,10 +23,14 @@ function wrapOwnerOnlyToolExecution(tool: AnyAgentTool, senderIsOwner: boolean):
   if (tool.ownerOnly !== true || senderIsOwner || !tool.execute) {
     return tool;
   }
+  const toolName = tool.name;
   return {
     ...tool,
     execute: async () => {
-      throw new Error("Tool restricted to owner senders.");
+      const record = createPolicyDecision("auth:owner_only", "Tool restricted to owner senders.", { toolName });
+      const err = new Error(record.message);
+      (err as any).policyDecisionRecord = record;
+      throw err;
     },
   };
 }

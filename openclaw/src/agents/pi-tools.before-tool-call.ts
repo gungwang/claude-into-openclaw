@@ -4,6 +4,10 @@ import { createSubsystemLogger } from "../logging/subsystem.js";
 import { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import { copyPluginToolMeta } from "../plugins/tools.js";
 import { PluginApprovalResolutions, type PluginApprovalResolution } from "../plugins/types.js";
+import {
+  createPolicyDecision,
+  type PolicyDecisionRecord,
+} from "./policy-reason-codes.js";
 import { createLazyRuntimeSurface } from "../shared/lazy-runtime.js";
 import { isPlainObject } from "../utils.js";
 import { copyChannelAgentToolMeta } from "./channel-tools.js";
@@ -20,7 +24,9 @@ export type HookContext = {
   loopDetection?: ToolLoopDetectionConfig;
 };
 
-type HookOutcome = { blocked: true; reason: string } | { blocked: false; params: unknown };
+type HookOutcome =
+  | { blocked: true; reason: string; policyDecisionRecord?: PolicyDecisionRecord }
+  | { blocked: false; params: unknown };
 
 const log = createSubsystemLogger("agents/tools");
 const BEFORE_TOOL_CALL_WRAPPED = Symbol("beforeToolCallWrapped");
@@ -153,6 +159,10 @@ export async function runBeforeToolCallHook(args: {
         return {
           blocked: true,
           reason: loopResult.message,
+          policyDecisionRecord: createPolicyDecision("loop:critical", loopResult.message, {
+            toolName,
+            details: { detector: loopResult.detector, count: loopResult.count },
+          }),
         };
       } else {
         const warningKey = loopResult.warningKey ?? `${loopResult.detector}:${toolName}`;
@@ -205,6 +215,11 @@ export async function runBeforeToolCallHook(args: {
       return {
         blocked: true,
         reason: hookResult.blockReason || "Tool call blocked by plugin hook",
+        policyDecisionRecord: createPolicyDecision(
+          "hook:plugin_blocked",
+          hookResult.blockReason || "Tool call blocked by plugin hook",
+          { toolName },
+        ),
       };
     }
 
@@ -253,6 +268,7 @@ export async function runBeforeToolCallHook(args: {
           return {
             blocked: true,
             reason: approval.description || "Plugin approval request failed",
+            policyDecisionRecord: createPolicyDecision("approval:cancelled", approval.description || "Plugin approval request failed", { toolName }),
           };
         }
         const hasImmediateDecision = Object.prototype.hasOwnProperty.call(
@@ -267,6 +283,7 @@ export async function runBeforeToolCallHook(args: {
             return {
               blocked: true,
               reason: "Plugin approval unavailable (no approval route)",
+              policyDecisionRecord: createPolicyDecision("approval:cancelled", "Plugin approval unavailable (no approval route)", { toolName }),
             };
           }
         } else {
@@ -322,7 +339,7 @@ export async function runBeforeToolCallHook(args: {
           };
         }
         if (decision === PluginApprovalResolutions.DENY) {
-          return { blocked: true, reason: "Denied by user" };
+          return { blocked: true, reason: "Denied by user", policyDecisionRecord: createPolicyDecision("approval:denied_by_user", "Denied by user", { toolName }) };
         }
         const timeoutBehavior = approval.timeoutBehavior ?? "deny";
         if (timeoutBehavior === "allow") {
@@ -331,7 +348,7 @@ export async function runBeforeToolCallHook(args: {
             params: mergeParamsWithApprovalOverrides(params, hookResult.params),
           };
         }
-        return { blocked: true, reason: "Approval timed out" };
+        return { blocked: true, reason: "Approval timed out", policyDecisionRecord: createPolicyDecision("approval:timeout", "Approval timed out", { toolName }) };
       } catch (err) {
         safeOnResolution(PluginApprovalResolutions.CANCELLED);
         if (isAbortSignalCancellation(err, args.signal)) {
@@ -339,12 +356,14 @@ export async function runBeforeToolCallHook(args: {
           return {
             blocked: true,
             reason: "Approval cancelled (run aborted)",
+            policyDecisionRecord: createPolicyDecision("approval:cancelled", "Approval cancelled (run aborted)", { toolName }),
           };
         }
         log.warn(`plugin approval gateway request failed, falling back to block: ${String(err)}`);
         return {
           blocked: true,
           reason: "Plugin approval required (gateway unavailable)",
+          policyDecisionRecord: createPolicyDecision("approval:gateway_unavailable", "Plugin approval required (gateway unavailable)", { toolName }),
         };
       }
     }

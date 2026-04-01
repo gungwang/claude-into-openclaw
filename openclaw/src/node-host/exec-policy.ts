@@ -1,4 +1,8 @@
 import { requiresExecApproval, type ExecAsk, type ExecSecurity } from "../infra/exec-approvals.js";
+import {
+  createPolicyDecision,
+  type PolicyDecisionRecord,
+} from "./policy-reason-codes.js";
 
 export type ExecApprovalDecision = "allow-once" | "allow-always" | null;
 
@@ -10,6 +14,8 @@ export type SystemRunPolicyDecision = {
   requiresAsk: boolean;
   approvalDecision: ExecApprovalDecision;
   approvedByAsk: boolean;
+  /** Structured reason when the decision is a deny. */
+  policyDecisionRecord?: PolicyDecisionRecord;
 } & (
   | {
       allowed: true;
@@ -80,6 +86,9 @@ export function evaluateSystemRunPolicy(params: {
       requiresAsk: false,
       approvalDecision: params.approvalDecision,
       approvedByAsk,
+      policyDecisionRecord: createPolicyDecision("exec:security_deny", "Execution disabled: security=deny", {
+        policySource: "tools.exec.security",
+      }),
     };
   }
 
@@ -102,6 +111,9 @@ export function evaluateSystemRunPolicy(params: {
       requiresAsk,
       approvalDecision: params.approvalDecision,
       approvedByAsk,
+      policyDecisionRecord: createPolicyDecision("exec:approval_required", "Execution requires user approval", {
+        policySource: "tools.exec.ask",
+      }),
     };
   }
 
@@ -132,6 +144,18 @@ export function evaluateSystemRunPolicy(params: {
       requiresAsk,
       approvalDecision: params.approvalDecision,
       approvedByAsk,
+      policyDecisionRecord: createPolicyDecision(
+        shellWrapperBlocked ? "exec:shell_wrapper_blocked" : "exec:allowlist_miss",
+        shellWrapperBlocked
+          ? "Shell wrapper invocation blocked by allowlist policy"
+          : "Command not in exec allowlist",
+        {
+          policySource: "tools.exec.security",
+          details: shellWrapperBlocked
+            ? { windowsShellWrapper: windowsShellWrapperBlocked }
+            : undefined,
+        },
+      ),
     };
   }
 

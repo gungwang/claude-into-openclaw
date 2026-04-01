@@ -1,5 +1,10 @@
 import { filterToolsByPolicy } from "./pi-tools.policy.js";
 import type { AnyAgentTool } from "./pi-tools.types.js";
+import {
+  createPolicyDecision,
+  formatPolicyDecision,
+  type PolicyDecisionRecord,
+} from "./policy-reason-codes.js";
 import { isKnownCoreToolId } from "./tool-catalog.js";
 import {
   buildPluginToolGroups,
@@ -93,6 +98,8 @@ export function applyToolPolicyPipeline(params: {
   toolMeta: (tool: AnyAgentTool) => { pluginId: string } | undefined;
   warn: (message: string) => void;
   steps: ToolPolicyPipelineStep[];
+  /** Optional accumulator for structured policy deny records. */
+  policyDecisions?: PolicyDecisionRecord[];
 }): AnyAgentTool[] {
   const coreToolNames = new Set(
     params.tools
@@ -143,7 +150,28 @@ export function applyToolPolicyPipeline(params: {
     }
 
     const expanded = expandPolicyWithPluginGroups(policy, pluginGroups);
-    filtered = expanded ? filterToolsByPolicy(filtered, expanded) : filtered;
+    if (expanded) {
+      const before = filtered;
+      filtered = filterToolsByPolicy(filtered, expanded);
+      if (params.policyDecisions) {
+        const afterNames = new Set(filtered.map((tool) => normalizeToolName(tool.name)));
+        for (const tool of before) {
+          const name = normalizeToolName(tool.name);
+          if (!afterNames.has(name)) {
+            const reasonCode = labelToReasonCode(step.label);
+            const record = createPolicyDecision(
+              reasonCode,
+              `Tool "${tool.name}" denied by ${step.label}`,
+              {
+                policySource: step.label,
+                toolName: tool.name,
+              },
+            );
+            params.policyDecisions.push(record);
+          }
+        }
+      }
+    }
   }
   return filtered;
 }
@@ -182,4 +210,30 @@ function describeUnknownAllowlistSuffix(params: {
 
 export function resetToolPolicyWarningCacheForTest(): void {
   seenToolPolicyWarnings.clear();
+}
+
+function labelToReasonCode(label: string): PolicyDecisionRecord["code"] {
+  const normalized = label.toLowerCase();
+  if (normalized.includes("profile")) {
+    return "tool_policy:profile_deny";
+  }
+  if (normalized.includes("sandbox")) {
+    return "tool_policy:sandbox_deny";
+  }
+  if (normalized.includes("subagent")) {
+    return "tool_policy:subagent_deny";
+  }
+  if (normalized.includes("group")) {
+    return "tool_policy:group_deny";
+  }
+  if (normalized.includes("byprovider")) {
+    if (normalized.includes("agents.")) {
+      return "tool_policy:agent_provider_deny";
+    }
+    return "tool_policy:global_provider_deny";
+  }
+  if (normalized.includes("agents.") || normalized.includes("agent ")) {
+    return "tool_policy:agent_deny";
+  }
+  return "tool_policy:global_deny";
 }
