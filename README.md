@@ -8,9 +8,23 @@
   <strong>Better Harness Tools, not merely storing the archive of leaked Claude Code</strong>
 </p>
 
-<p align="center">
-  <a href="https://github.com/sponsors/instructkr"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github&style=for-the-badge" alt="Sponsor on GitHub" /></a>
-</p>
+---
+
+## Purpose
+
+This repository serves as a bridge between Claude Code's architectural insights and OpenClaw's agent platform. By analyzing Claude Code's tool/command inventory, agent harness patterns, and runtime structures, we aim to enhance OpenClaw with:
+
+- **Improved Security**: Canonical identity layers, policy decision traceability, and skill vetting with runtime trust labels
+- **Enhanced Power**: Adapter maturity frameworks, mode contract testing, and deterministic routing with explainability
+- **Greater Intelligence**: Route quality benchmarking, session event journals for replay/debug, and collision-safe tool resolution
+- **Token Efficiency**: Better compaction strategies informed by harness lifecycle patterns and context management techniques
+
+This work combines Claude Code features, functionality, and architectural patterns with OpenClaw's existing strengths (agent loop, streaming lifecycle, multi-agent delegation, transcript hygiene) to create migration-grade observability and adapter ergonomics.
+
+📋 **For detailed improvement specifications**, see [SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md)
+
+---
+
 
 > [!IMPORTANT]
 > **Rust port is now in progress** on the [`dev/rust`](https://github.com/instructkr/claw-code/tree/dev/rust) branch and is expected to be merged into main today. The Rust implementation aims to deliver a faster, memory-safe harness runtime. Stay tuned — this will be the definitive version of the project.
