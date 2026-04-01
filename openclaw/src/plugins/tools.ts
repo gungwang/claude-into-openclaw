@@ -1,3 +1,4 @@
+import { deriveFallbackCanonicalToolId } from "../agents/tool-identity.js";
 import { normalizeToolName } from "../agents/tool-policy.js";
 import type { AnyAgentTool } from "../agents/tools/common.js";
 import { applyPluginAutoEnable } from "../config/plugin-auto-enable.js";
@@ -17,6 +18,8 @@ const log = createSubsystemLogger("plugins");
 type PluginToolMeta = {
   pluginId: string;
   optional: boolean;
+  canonicalIdHint?: string;
+  namespace?: "plugin";
 };
 
 const pluginToolMeta = new WeakMap<AnyAgentTool, PluginToolMeta>();
@@ -178,6 +181,12 @@ export function resolvePluginTools(params: {
       pluginToolMeta.set(tool, {
         pluginId: entry.pluginId,
         optional: entry.optional,
+        namespace: "plugin",
+        canonicalIdHint: deriveFallbackCanonicalToolId({
+          namespace: "plugin",
+          pluginId: entry.pluginId,
+          toolName: tool.name,
+        }),
       });
       tools.push(tool);
     }
