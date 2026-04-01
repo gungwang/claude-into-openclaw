@@ -1,4 +1,24 @@
 # 我创建了一个新仓库，因为无法从 @instructkr 那里 fork 该仓库
+
+<p align="center">
+  <a href="https://github.com/gungwang/claude-code-openclaw/stargazers"><img src="https://img.shields.io/github/stars/gungwang/claude-code-openclaw?style=for-the-badge" alt="GitHub stars" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea44f?style=for-the-badge" alt="MIT License" /></a>
+  <a href="./GOOD_FIRST_ISSUES_zh.md"><img src="https://img.shields.io/badge/onboarding-good%20first%20issues-f59e0b?style=for-the-badge" alt="Good First Issues" /></a>
+  <a href="./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md"><img src="https://img.shields.io/badge/roadmap-spec%20driven-2563eb?style=for-the-badge" alt="Spec Driven" /></a>
+</p>
+
+<p align="center">
+  <img src="assets/clawd-hero.jpeg" alt="OpenClaw 宣传视觉图" width="320" />
+</p>
+
+<p align="center">
+  <a href="./README.md">English README</a> ·
+  <a href="./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2_zh.md">中文规范</a> ·
+  <a href="./CONTRIBUTING_zh.md">贡献指南</a> ·
+  <a href="./CODE_OF_CONDUCT_zh.md">行为准则</a> ·
+  <a href="./GOOD_FIRST_ISSUES_zh.md">入门 Issue</a>
+</p>
+
 ---
 
 ## 项目目的：Claude-code => OpenClaw
@@ -12,7 +32,17 @@
 
 本工作将 Claude Code 的特性、功能和架构模式与 OpenClaw 现有的优势（智能体循环、流式生命周期、多智能体委托、对话清理）相结合，以创建迁移级的可观测性和适配器人机工程学。
 
-📋 **详细改进规范请参阅** [SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md) | [中文版](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2_zh.md)
+📋 **详细改进规范请参阅** [SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md) | [中文版规范](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2_zh.md)
+
+## 社区文档
+
+- [README.md](./README.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [CONTRIBUTING_zh.md](./CONTRIBUTING_zh.md)
+- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+- [CODE_OF_CONDUCT_zh.md](./CODE_OF_CONDUCT_zh.md)
+- [GOOD_FIRST_ISSUES.md](./GOOD_FIRST_ISSUES.md)
+- [GOOD_FIRST_ISSUES_zh.md](./GOOD_FIRST_ISSUES_zh.md)
 
 ---
 
@@ -26,6 +56,43 @@
 > **Rust 移植正在进行中**，位于 [`dev/rust`](https://github.com/instructkr/claw-code/tree/dev/rust) 分支，预计今天将合并到主分支。Rust 实现旨在提供更快、内存安全的架构运行时。敬请期待 — 这将是项目的最终版本。
 
 > 如果您觉得这项工作有用，请考虑[在 GitHub 上赞助 @instructkr](https://github.com/sponsors/instructkr) 以支持持续的开源架构工程研究。
+
+## 环境准备
+
+克隆仓库：
+
+```bash
+git clone https://github.com/gungwang/claude-code-openclaw.git
+cd claude-code-openclaw
+```
+
+可选虚拟环境：
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+常用命令：
+
+```bash
+python3 -m src.main summary
+python3 -m src.main manifest
+python3 -m src.main parity-audit
+python3 -m unittest discover -s tests -v
+```
+
+## 入门路线图
+
+这些适合开始贡献的方向直接来自 OpenClaw 改进规范：
+
+- Track A：规范化命令和工具身份
+- Track B：路由可解释性与调试输出
+- Track C：成熟度级别报告工件
+- Track D：策略原因代码暴露
+- Track E：模式契约测试
+
+如果你想从一个边界清晰的任务开始，请查看 [GOOD_FIRST_ISSUES_zh.md](./GOOD_FIRST_ISSUES_zh.md)。
 
 ---
 

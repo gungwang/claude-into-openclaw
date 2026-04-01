@@ -1,4 +1,24 @@
 # I created a new repository as I couldn't fork the repository from @instructkr
+
+<p align="center">
+  <a href="https://github.com/gungwang/claude-code-openclaw/stargazers"><img src="https://img.shields.io/github/stars/gungwang/claude-code-openclaw?style=for-the-badge" alt="GitHub stars" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea44f?style=for-the-badge" alt="MIT License" /></a>
+  <a href="./GOOD_FIRST_ISSUES.md"><img src="https://img.shields.io/badge/onboarding-good%20first%20issues-f59e0b?style=for-the-badge" alt="Good First Issues" /></a>
+  <a href="./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md"><img src="https://img.shields.io/badge/roadmap-spec%20driven-2563eb?style=for-the-badge" alt="Spec Driven" /></a>
+</p>
+
+<p align="center">
+  <img src="assets/clawd-hero.jpeg" alt="OpenClaw promotion visual" width="320" />
+</p>
+
+<p align="center">
+  <a href="./README_zh.md">中文 README</a> ·
+  <a href="./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2_zh.md">中文规范</a> ·
+  <a href="./CONTRIBUTING.md">Contributing</a> ·
+  <a href="./CODE_OF_CONDUCT.md">Code of Conduct</a> ·
+  <a href="./GOOD_FIRST_ISSUES.md">Good First Issues</a>
+</p>
+
 ---
 
 ## Purpose: Claude-code => OpenClaw
@@ -12,7 +32,17 @@ This repository serves as a bridge between Claude Code's architectural insights 
 
 This work combines Claude Code features, functionality, and architectural patterns with OpenClaw's existing strengths (agent loop, streaming lifecycle, multi-agent delegation, transcript hygiene) to create migration-grade observability and adapter ergonomics.
 
-📋 **For detailed improvement specifications**, see [SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md) | [中文版](./README_zh.md)
+📋 **For detailed improvement specifications**, see [SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md) | [中文版规范](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2_zh.md)
+
+## Community Docs
+
+- [README_zh.md](./README_zh.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [CONTRIBUTING_zh.md](./CONTRIBUTING_zh.md)
+- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+- [CODE_OF_CONDUCT_zh.md](./CODE_OF_CONDUCT_zh.md)
+- [GOOD_FIRST_ISSUES.md](./GOOD_FIRST_ISSUES.md)
+- [GOOD_FIRST_ISSUES_zh.md](./GOOD_FIRST_ISSUES_zh.md)
 
 ---
 
@@ -26,6 +56,43 @@ This work combines Claude Code features, functionality, and architectural patter
 > **Rust port is now in progress** on the [`dev/rust`](https://github.com/instructkr/claw-code/tree/dev/rust) branch and is expected to be merged into main today. The Rust implementation aims to deliver a faster, memory-safe harness runtime. Stay tuned — this will be the definitive version of the project.
 
 > If you find this work useful, consider [sponsoring @instructkr on GitHub](https://github.com/sponsors/instructkr) to support continued open-source harness engineering research.
+
+## Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/gungwang/claude-code-openclaw.git
+cd claude-code-openclaw
+```
+
+Optional virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Useful commands:
+
+```bash
+python3 -m src.main summary
+python3 -m src.main manifest
+python3 -m src.main parity-audit
+python3 -m unittest discover -s tests -v
+```
+
+## Starter Roadmap
+
+These starter contribution themes come directly from the OpenClaw improvement spec:
+
+- Track A: canonical command and tool identities
+- Track B: route explainability and debugging output
+- Track C: maturity-level reporting artifacts
+- Track D: policy reason-code surfacing
+- Track E: mode contract tests
+
+If you want a scoped entry point, start with [GOOD_FIRST_ISSUES.md](./GOOD_FIRST_ISSUES.md).
 
 ---
 

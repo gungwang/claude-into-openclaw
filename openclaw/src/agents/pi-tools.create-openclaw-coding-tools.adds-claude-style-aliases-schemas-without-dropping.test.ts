@@ -11,6 +11,7 @@ import "./test-helpers/fast-coding-tools.js";
 import { createOpenClawTools } from "./openclaw-tools.js";
 import { findUnsupportedSchemaKeywords } from "./pi-embedded-runner/google.js";
 import { __testing, createOpenClawCodingTools } from "./pi-tools.js";
+import type { AnyAgentTool } from "./pi-tools.types.js";
 import { createOpenClawReadTool, createSandboxedReadTool } from "./pi-tools.read.js";
 import { createHostSandboxFsBridge } from "./test-helpers/host-sandbox-fs-bridge.js";
 
@@ -81,6 +82,27 @@ function extractToolText(result: unknown): string {
 }
 
 describe("createOpenClawCodingTools", () => {
+  it("builds canonical identities and detects ambiguous display names", async () => {
+    const tools = [
+      { name: "message", label: "Message" },
+      { name: "message_alt", label: "Message" },
+    ] as AnyAgentTool[];
+
+    const identities = __testing.buildCanonicalIdentities(tools);
+    expect(identities.map((identity) => identity.id)).toEqual([
+      "core:message",
+      "core:message_alt",
+    ]);
+
+    const logger = await import("../logger.js");
+    const logWarnSpy = vi.spyOn(logger, "logWarn").mockImplementation(() => undefined);
+    __testing.emitCanonicalIdentityDiagnostics(identities);
+    expect(logWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("ambiguous display name \"Message\""),
+    );
+    logWarnSpy.mockRestore();
+  });
+
   describe("Claude/Gemini alias support", () => {
     it("adds Claude-style aliases to schemas without dropping metadata", () => {
       const base: AgentTool = {

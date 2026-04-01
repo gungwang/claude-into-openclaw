@@ -57,6 +57,14 @@ import {
   mergeAlsoAllowPolicy,
   resolveToolProfilePolicy,
 } from "./tool-policy.js";
+import {
+  deriveFallbackCanonicalToolId,
+  findAmbiguousDisplayNames,
+  findDuplicateCanonicalIds,
+  inferCapabilityClassFromToolName,
+  normalizeCanonicalToolId,
+  type CanonicalToolIdentity,
+} from "./tool-identity.js";
 import { resolveWorkspaceRoot } from "./workspace-dir.js";
 
 function isOpenAIProvider(provider?: string) {
@@ -71,6 +79,44 @@ const TOOL_ALLOW_BY_MESSAGE_PROVIDER: Readonly<Record<string, readonly string[]>
   node: ["canvas", "image", "pdf", "tts", "web_fetch", "web_search"],
 };
 const MEMORY_FLUSH_ALLOWED_TOOL_NAMES = new Set(["read", "write"]);
+
+function buildCanonicalIdentities(tools: AnyAgentTool[]): CanonicalToolIdentity[] {
+  return tools.map((tool) => {
+    const pluginMeta = getPluginToolMeta(tool);
+    const namespace = pluginMeta?.namespace ?? "core";
+    const id = normalizeCanonicalToolId(
+      pluginMeta?.canonicalIdHint ??
+        deriveFallbackCanonicalToolId({
+          namespace,
+          toolName: tool.name,
+          pluginId: pluginMeta?.pluginId,
+        }),
+    );
+
+    return {
+      id,
+      displayName: tool.label ?? tool.name,
+      namespace,
+      capabilityClass: inferCapabilityClassFromToolName(tool.name),
+    };
+  });
+}
+
+function emitCanonicalIdentityDiagnostics(identities: CanonicalToolIdentity[]): void {
+  const duplicateIds = findDuplicateCanonicalIds(identities);
+  for (const duplicate of duplicateIds) {
+    logWarn(
+      `tools: duplicate canonical id detected (${duplicate.id}) across ${duplicate.entries.length} entries`,
+    );
+  }
+
+  const ambiguousDisplayNames = findAmbiguousDisplayNames(identities);
+  for (const ambiguous of ambiguousDisplayNames) {
+    logWarn(
+      `tools: ambiguous display name "${ambiguous.displayName}" maps to multiple canonical ids (${ambiguous.ids.join(", ")})`,
+    );
+  }
+}
 
 function normalizeMessageProvider(messageProvider?: string): string | undefined {
   const normalized = messageProvider?.trim().toLowerCase();
@@ -215,6 +261,8 @@ export const __testing = {
   wrapToolParamNormalization,
   assertRequiredParams,
   applyModelProviderToolPolicy,
+  buildCanonicalIdentities,
+  emitCanonicalIdentityDiagnostics,
 } as const;
 
 export function createOpenClawCodingTools(options?: {
@@ -654,6 +702,9 @@ export function createOpenClawCodingTools(options?: {
   const withAbort = options?.abortSignal
     ? withHooks.map((tool) => wrapToolWithAbortSignal(tool, options.abortSignal))
     : withHooks;
+
+  const canonicalIdentities = buildCanonicalIdentities(withAbort);
+  emitCanonicalIdentityDiagnostics(canonicalIdentities);
 
   // NOTE: Keep canonical (lowercase) tool names here.
   // pi-ai's Anthropic OAuth transport remaps tool names to Claude Code-style names

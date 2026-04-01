@@ -20,6 +20,7 @@ vi.mock("../config/plugin-auto-enable.js", () => ({
 }));
 
 let resolvePluginTools: typeof import("./tools.js").resolvePluginTools;
+let getPluginToolMeta: typeof import("./tools.js").getPluginToolMeta;
 let resetPluginRuntimeStateForTest: typeof import("./runtime.js").resetPluginRuntimeStateForTest;
 let setActivePluginRegistry: typeof import("./runtime.js").setActivePluginRegistry;
 
@@ -207,7 +208,7 @@ describe("resolvePluginTools optional tools", () => {
     }));
     ({ resetPluginRuntimeStateForTest, setActivePluginRegistry } = await import("./runtime.js"));
     resetPluginRuntimeStateForTest();
-    ({ resolvePluginTools } = await import("./tools.js"));
+    ({ resolvePluginTools, getPluginToolMeta } = await import("./tools.js"));
     ({ resetPluginRuntimeStateForTest, setActivePluginRegistry } = await import("./runtime.js"));
     resetPluginRuntimeStateForTest();
   });
@@ -241,6 +242,20 @@ describe("resolvePluginTools optional tools", () => {
     const tools = resolveOptionalDemoTools(toolAllowlist);
 
     expectResolvedToolNames(tools, ["optional_tool"]);
+  });
+
+  it("attaches plugin canonical identity hints to resolved tools", () => {
+    setOptionalDemoRegistry();
+    const tools = resolveOptionalDemoTools(["optional_tool"]);
+
+    expect(tools).toHaveLength(1);
+    const meta = getPluginToolMeta(tools[0]!);
+    expect(meta).toMatchObject({
+      pluginId: "optional-demo",
+      optional: true,
+      namespace: "plugin",
+      canonicalIdHint: "plugin:optional-demo:optional_tool",
+    });
   });
 
   it("rejects plugin id collisions with core tool names", () => {
