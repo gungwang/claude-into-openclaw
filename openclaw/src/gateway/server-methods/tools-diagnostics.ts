@@ -1,10 +1,11 @@
 /**
- * Gateway handlers: tools.explain and tools.maturityReport
+ * Gateway handlers: tools.explain, tools.maturityReport, session.journal
  *
- * Exposes route explainability and maturity report data via gateway RPC.
+ * Exposes route explainability, maturity report data, and journal export
+ * via gateway RPC.
  */
 
-import { resolveDefaultAgentId, resolveSessionAgentId, listAgentIds } from "../../agents/agent-scope.js";
+import { resolveDefaultAgentId, resolveSessionAgentId, resolveAgentDir, resolveAgentWorkspaceDir, listAgentIds } from "../../agents/agent-scope.js";
 import {
   buildToolResolutionTrace,
   explainToolResolution,
@@ -15,8 +16,32 @@ import {
   formatMaturityReportMarkdown,
 } from "../../agents/maturity-trust.js";
 import { CORE_TOOL_MATURITY_ENTRIES } from "../../agents/maturity-trust-defaults.js";
-import { resolveEffectiveToolInventory } from "../../agents/tools-effective-inventory.js";
+import { buildToolsCatalogResult } from "./tools-catalog.js";
+import { createOpenClawTools } from "../../agents/openclaw-tools.js";
+import {
+  applyToolPolicyPipeline,
+  buildDefaultToolPolicyPipelineSteps,
+} from "../../agents/tool-policy-pipeline.js";
+import {
+  resolveEffectiveToolPolicy,
+  resolveGroupToolPolicy,
+} from "../../agents/pi-tools.policy.js";
+import {
+  applyOwnerOnlyToolPolicy,
+  collectExplicitAllowlist,
+  mergeAlsoAllowPolicy,
+  resolveToolProfilePolicy,
+} from "../../agents/tool-policy.js";
 import type { PolicyDecisionRecord } from "../../agents/policy-reason-codes.js";
+import { getPluginToolMeta } from "../../plugins/tools.js";
+import {
+  formatJournalTimeline,
+  exportJournalAsJson,
+  filterJournalEvents,
+  type SessionEventJournal,
+  type JournalEventType,
+  type JournalEventSeverity,
+} from "../../agents/session-event-journal.js";
 import { loadConfig } from "../../config/config.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import type { GatewayRequestHandlers, RespondFn } from "./types.js";
@@ -64,33 +89,100 @@ export const toolsDiagnosticHandlers: GatewayRequestHandlers = {
     }
     const { cfg, agentId } = resolved;
     const format = params.format === "text" ? "text" : "json";
+    const senderIsOwner = params.senderIsOwner !== false;
 
-    // Build the effective inventory to get the "after" list.
-    const inventory = resolveEffectiveToolInventory({
-      cfg,
-      agentId,
-      senderIsOwner: true,
-    });
-
-    const allToolIds = inventory.groups.flatMap((g) =>
+    // Build the "before" tool list from catalog.
+    const catalog = buildToolsCatalogResult({ cfg, agentId });
+    const toolsBefore = catalog.groups.flatMap((g) =>
       g.tools.map((t) => ({
         name: t.id,
         label: t.label,
-        pluginId: t.pluginId,
+        pluginId: (t as { pluginId?: string }).pluginId,
       })),
     );
 
-    // We don't have a "before policy" list here without re-running the full
-    // pipeline with a policyDecisions accumulator. Use the catalog as the
-    // "before" set and the effective inventory as the "after" set.
-    // Policy decisions are empty in this diagnostic path — wiring into the
-    // full pipeline with accumulator is a future enhancement.
+    // Build the "after" tool list using the real policy pipeline with accumulator.
+    const {
+      globalPolicy,
+      globalProviderPolicy,
+      agentPolicy,
+      agentProviderPolicy,
+      profile,
+      providerProfile,
+      profileAlsoAllow,
+      providerProfileAlsoAllow,
+    } = resolveEffectiveToolPolicy({ config: cfg, agentId });
+    const profilePolicy = resolveToolProfilePolicy(profile);
+    const providerProfilePolicy = resolveToolProfilePolicy(providerProfile);
+    const profilePolicyWithAlsoAllow = mergeAlsoAllowPolicy(profilePolicy, profileAlsoAllow);
+    const providerProfilePolicyWithAlsoAllow = mergeAlsoAllowPolicy(
+      providerProfilePolicy,
+      providerProfileAlsoAllow,
+    );
+
+    const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
+    const allTools = createOpenClawTools({
+      config: cfg,
+      workspaceDir,
+      allowGatewaySubagentBinding: true,
+      pluginToolAllowlist: collectExplicitAllowlist([
+        profilePolicy,
+        providerProfilePolicy,
+        globalPolicy,
+        globalProviderPolicy,
+        agentPolicy,
+        agentProviderPolicy,
+      ]),
+    });
+
     const policyDecisions: PolicyDecisionRecord[] = [];
+    const afterPolicy = applyToolPolicyPipeline({
+      tools: allTools as any,
+      toolMeta: (tool) => getPluginToolMeta(tool as any),
+      warn: () => {},
+      policyDecisions,
+      steps: [
+        ...buildDefaultToolPolicyPipelineSteps({
+          profilePolicy: profilePolicyWithAlsoAllow,
+          profile,
+          profileAlsoAllow,
+          providerProfilePolicy: providerProfilePolicyWithAlsoAllow,
+          providerProfile,
+          providerProfileAlsoAllow,
+          globalPolicy,
+          globalProviderPolicy,
+          agentPolicy,
+          agentProviderPolicy,
+          agentId,
+        }),
+      ],
+    });
+
+    const ownerFiltered = applyOwnerOnlyToolPolicy(afterPolicy, senderIsOwner);
+    // Record owner-only filtering
+    if (!senderIsOwner) {
+      const afterNames = new Set(ownerFiltered.map((t) => t.name));
+      for (const tool of afterPolicy) {
+        if (!afterNames.has(tool.name)) {
+          policyDecisions.push({
+            code: "auth:owner_only",
+            message: `Tool "${tool.name}" restricted to owner senders.`,
+            toolName: tool.name,
+          });
+        }
+      }
+    }
+
+    const toolsAfter = ownerFiltered.map((t) => ({
+      name: t.name,
+      label: (t as any).label,
+      pluginId: getPluginToolMeta(t as any)?.pluginId,
+    }));
 
     const trace = buildToolResolutionTrace({
       query: toolName,
-      toolsBefore: allToolIds,
-      toolsAfter: allToolIds,
+      toolsBefore,
+      toolsAfter,
       policyDecisions,
       agentId,
     });
@@ -107,7 +199,7 @@ export const toolsDiagnosticHandlers: GatewayRequestHandlers = {
       {
         query: toolName,
         agentId,
-        profile: inventory.profile,
+        profile: profile ?? "full",
         candidate,
         trace: {
           totalBeforePolicy: trace.totalBeforePolicy,
@@ -139,4 +231,90 @@ export const toolsDiagnosticHandlers: GatewayRequestHandlers = {
 
     respond(true, report, undefined);
   },
+
+  /**
+   * session.journal — Export or query a session's event journal.
+   *
+   * Params:
+   *   sessionKey: string (required)
+   *   format?: "json" | "timeline" (default: "json")
+   *   types?: string[] (filter by event type)
+   *   severity?: string[] (filter by severity)
+   *   correlationId?: string (filter by correlation ID)
+   */
+  "session.journal": ({ params, respond }) => {
+    const sessionKey = typeof params.sessionKey === "string" ? params.sessionKey.trim() : "";
+    if (!sessionKey) {
+      respond(
+        false,
+        undefined,
+        errorShape(ErrorCodes.INVALID_REQUEST, "session.journal requires params.sessionKey"),
+      );
+      return;
+    }
+
+    const journal = getSessionJournal(sessionKey);
+    if (!journal) {
+      respond(
+        false,
+        undefined,
+        errorShape(ErrorCodes.INVALID_REQUEST, `No journal found for session "${sessionKey}"`),
+      );
+      return;
+    }
+
+    const format = params.format === "timeline" ? "timeline" : "json";
+    const types = Array.isArray(params.types) ? params.types as JournalEventType[] : undefined;
+    const severity = Array.isArray(params.severity) ? params.severity as JournalEventSeverity[] : undefined;
+    const correlationId = typeof params.correlationId === "string" ? params.correlationId : undefined;
+
+    const hasFilters = types || severity || correlationId;
+    const events = hasFilters
+      ? filterJournalEvents(journal, { types, severity, correlationId })
+      : journal.events;
+
+    if (format === "timeline") {
+      const filteredJournal = hasFilters ? { ...journal, events } : journal;
+      respond(true, { text: formatJournalTimeline(filteredJournal) }, undefined);
+      return;
+    }
+
+    respond(true, {
+      sessionKey: journal.sessionKey,
+      agentId: journal.agentId,
+      runId: journal.runId,
+      createdAt: journal.createdAt,
+      eventCount: events.length,
+      events,
+    }, undefined);
+  },
 };
+
+// ── Session journal registry ──
+// In-memory registry for active session journals.
+// Journals are registered by the run loop and cleaned up on session end.
+
+const activeJournals = new Map<string, SessionEventJournal>();
+const MAX_JOURNAL_ENTRIES = 100;
+
+export function registerSessionJournal(sessionKey: string, journal: SessionEventJournal): void {
+  if (activeJournals.size >= MAX_JOURNAL_ENTRIES) {
+    const oldest = activeJournals.keys().next().value;
+    if (oldest) {
+      activeJournals.delete(oldest);
+    }
+  }
+  activeJournals.set(sessionKey, journal);
+}
+
+export function getSessionJournal(sessionKey: string): SessionEventJournal | undefined {
+  return activeJournals.get(sessionKey);
+}
+
+export function removeSessionJournal(sessionKey: string): boolean {
+  return activeJournals.delete(sessionKey);
+}
+
+export function clearAllSessionJournals(): void {
+  activeJournals.clear();
+}
