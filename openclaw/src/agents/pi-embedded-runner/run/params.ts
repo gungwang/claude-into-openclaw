@@ -142,4 +142,10 @@ export type RunEmbeddedPiAgentParams = {
    * exit promptly after emitting the final JSON result.
    */
   cleanupBundleMcpOnRunEnd?: boolean;
+  /**
+   * Optional session event journal for recording structured lifecycle events.
+   * When provided, the run loop records inbound messages, tool calls,
+   * compaction, errors, and outbound messages to the journal.
+   */
+  journal?: import("../../agents/session-event-journal.js").SessionEventJournal;
 };

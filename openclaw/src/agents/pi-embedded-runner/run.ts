@@ -86,6 +86,13 @@ import type { RunEmbeddedPiAgentParams } from "./run/params.js";
 import { buildEmbeddedRunPayloads } from "./run/payloads.js";
 import { resolveEffectiveRuntimeModel, resolveHookModelSelection } from "./run/setup.js";
 import {
+  recordCompactionEnd,
+  recordCompactionStart,
+  recordInboundMessage,
+  recordOutboundMessage,
+  recordRunError,
+} from "../journal-integration.js";
+import {
   sessionLikelyHasOversizedToolResults,
   truncateOversizedToolResultsInSession,
 } from "./tool-result-truncation.js";
@@ -308,6 +315,12 @@ export async function runEmbeddedPiAgent(
       let rateLimitProfileRotations = 0;
       let timeoutCompactionAttempts = 0;
       const overloadFailoverBackoffMs = resolveOverloadFailoverBackoffMs(params.config);
+
+      // ── Journal: record inbound message ──
+      recordInboundMessage(params.journal, {
+        prompt: params.prompt,
+        correlationId: params.runId,
+      });
       const overloadProfileRotationLimit = resolveOverloadProfileRotationLimit(params.config);
       const rateLimitProfileRotationLimit = resolveRateLimitProfileRotationLimit(params.config);
       const maybeEscalateRateLimitProfileFallback = (params: {
@@ -447,6 +460,13 @@ export async function runEmbeddedPiAgent(
                 `provider=${provider}/${modelId} attempts=${runLoopIterations} ` +
                 `maxAttempts=${MAX_RUN_LOOP_ITERATIONS}`,
             );
+            // ── Journal: retry limit error ──
+            recordRunError(params.journal, {
+              message,
+              provider,
+              model: modelId,
+              correlationId: params.runId,
+            });
             return {
               payloads: [
                 {
@@ -644,6 +664,12 @@ export async function runEmbeddedPiAgent(
               );
               let timeoutCompactResult: Awaited<ReturnType<typeof contextEngine.compact>>;
               await runOwnsCompactionBeforeHook("timeout recovery");
+              // ── Journal: compaction start ──
+              const compactionStartedAt = Date.now();
+              recordCompactionStart(params.journal, {
+                reason: "timeout recovery",
+                correlationId: timeoutDiagId,
+              });
               try {
                 const timeoutCompactionRuntimeContext = {
                   ...buildEmbeddedCompactionRuntimeContext({
@@ -695,6 +721,13 @@ export async function runEmbeddedPiAgent(
                 };
               }
               await runOwnsCompactionAfterHook("timeout recovery", timeoutCompactResult);
+              // ── Journal: compaction end ──
+              recordCompactionEnd(params.journal, {
+                reason: "timeout recovery",
+                startedAt: compactionStartedAt,
+                success: timeoutCompactResult.compacted,
+                correlationId: timeoutDiagId,
+              });
               if (timeoutCompactResult.compacted) {
                 autoCompactionCount += 1;
                 if (contextEngine.info.ownsCompaction === true) {
@@ -1434,6 +1467,16 @@ export async function runEmbeddedPiAgent(
               agentDir: params.agentDir,
             });
           }
+          // ── Journal: record outbound payloads ──
+          for (const payload of payloads) {
+            if (payload.text) {
+              recordOutboundMessage(params.journal, {
+                text: payload.text,
+                correlationId: params.runId,
+              });
+            }
+          }
+
           return {
             payloads: payloads.length ? payloads : undefined,
             meta: {
