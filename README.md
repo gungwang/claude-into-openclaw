@@ -44,9 +44,7 @@ This work combines Claude Code features, functionality, and architectural patter
 
 --- ---------------------------------------------------------- ----
 
-# Claude Features integrated into OpenClaw
-
-# OpenClaw Improvement Specification (Derived from claw-code Analysis)
+# Claude Features integrated into OpenClaw: OpenClaw Improvement Specification (Derived from Claude Analysis)
 
 ## Status
 Plan/specification only. **No implementation changes** included.
