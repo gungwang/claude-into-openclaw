@@ -368,11 +368,6 @@ These four deliver high operational value without destabilizing existing loop/ru
 
 ---
 
-## 10) Constraint Reminder
-
-This document is intentionally **plan/spec only**. It does not include code modifications.
-
-
 ==============================================================
 
 # Setup is same as the Original OpenClaw
