@@ -1,5 +1,5 @@
 ## ⚠️ 郑重声明 ⚠️ ##
-### ⚠️ 本项目**不包含** Anthropic "Claude Code" 的任何源代码，也**未使用** Anthropic "Claude Code" 的任何源代码。⚠️ ###
+### ⚠️ 本项目**不包含** Anthropic "Claude Code" 的任何源代码，也**未使用** Anthropic "Claude Code" 的任何源代码。###
 
 ---
 ## 🎉 本地构建并运行成功！(2026-04-05) 🎉
