@@ -1,3 +1,12 @@
+> ## 🎉 本地构建并运行成功！(2026-04-05)
+>
+> OpenClaw `2026.4.1-beta.1` 已在 Ubuntu 22.04 上**从源码成功构建并本地运行**。
+> 构建过程中修复了两个模块导入路径错误 — 详情请参见 [OPENCLAW-BUILD-ISSUES-FIXES.MD](./OPENCLAW-BUILD-ISSUES-FIXES.MD) 和 [RUNNING-FIX-AFTER-BUILD.md](./RUNNING-FIX-AFTER-BUILD.md)。
+>
+> **构建环境：** Node v22.22.0 · pnpm v10.32.1 (Corepack) · rolldown v1.0.0-rc.12 · TypeScript
+
+---
+
 <p align="center">
   <a href="https://github.com/gungwang/claude-code-openclaw/stargazers"><img src="https://img.shields.io/github/stars/gungwang/claude-code-openclaw?style=for-the-badge" alt="GitHub stars" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ea44f?style=for-the-badge" alt="MIT License" /></a>

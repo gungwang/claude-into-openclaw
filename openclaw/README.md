@@ -1,3 +1,12 @@
+> ## 🎉 Successfully Built & Running Locally! (2026-04-05)
+>
+> OpenClaw `2026.4.1-beta.1` has been **successfully built from source and is running locally** on Ubuntu 22.04.
+> Two import-path bugs were fixed during the build process — see [OPENCLAW-BUILD-ISSUES-FIXES.MD](../OPENCLAW-BUILD-ISSUES-FIXES.MD) and [RUNNING-FIX-AFTER-BUILD.md](../RUNNING-FIX-AFTER-BUILD.md) for full details.
+>
+> **Build stack:** Node v22.22.0 · pnpm v10.32.1 (Corepack) · rolldown v1.0.0-rc.12 · TypeScript
+
+---
+
 # 🦞 OpenClaw — Personal AI Assistant
 
 <p align="center">

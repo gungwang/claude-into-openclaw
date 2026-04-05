@@ -1,3 +1,12 @@
+> ## 🎉 Successfully Built & Running Locally! (2026-04-05)
+>
+> OpenClaw `2026.4.1-beta.1` has been **successfully built from source and is running locally** on Ubuntu 22.04.
+> The CLI version mismatch documented below has been resolved. Everything is now aligned and operational.
+>
+> **Build stack:** Node v22.22.0 · pnpm v10.32.1 (Corepack) · rolldown v1.0.0-rc.12 · TypeScript
+
+---
+
 # Running Fix After Build (2026-04-05)
 
 ## Summary
