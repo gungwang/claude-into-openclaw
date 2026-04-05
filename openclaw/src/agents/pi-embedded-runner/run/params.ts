@@ -147,5 +147,5 @@ export type RunEmbeddedPiAgentParams = {
    * When provided, the run loop records inbound messages, tool calls,
    * compaction, errors, and outbound messages to the journal.
    */
-  journal?: import("../../agents/session-event-journal.js").SessionEventJournal;
+  journal?: import("../../session-event-journal.js").SessionEventJournal;
 };

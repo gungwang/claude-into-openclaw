@@ -2,7 +2,7 @@ import { requiresExecApproval, type ExecAsk, type ExecSecurity } from "../infra/
 import {
   createPolicyDecision,
   type PolicyDecisionRecord,
-} from "./policy-reason-codes.js";
+} from "../agents/policy-reason-codes.js";
 
 export type ExecApprovalDecision = "allow-once" | "allow-always" | null;
 
