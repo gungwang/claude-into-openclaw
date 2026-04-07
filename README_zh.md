@@ -435,3 +435,27 @@ pnpm gateway:watch
 ```
 
 说明：`pnpm openclaw ...` 会直接运行 TypeScript（通过 `tsx`）。`pnpm build` 会产出 `dist/`，供通过 Node 或打包后的 `openclaw` 二进制运行。
+
+---
+
+## 演示：OpenClaw 改进效果（攻击性更强一点 😈）
+
+以下 6 张截图展示了这次改进后的实际效果。
+
+### 1）控制台界面升级
+![OpenClaw 改进演示 1](./My-openclaw-1.png)
+
+### 2）流程更顺，混乱更少
+![OpenClaw 改进演示 2](./My-openclaw-2.png)
+
+### 3）执行路径更干净
+![OpenClaw 改进演示 3](./My-openclaw-3.png)
+
+### 4）运行时可视化更清晰
+![OpenClaw 改进演示 4](./My-openclaw-4.png)
+
+### 5）编排更稳，头痛更少
+![OpenClaw 改进演示 5](./My-openclaw-5.png)
+
+### 6）终极形态：自信且略带疯感
+![OpenClaw 改进演示 6](./My-openclaw-6.png)

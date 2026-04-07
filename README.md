@@ -437,3 +437,27 @@ pnpm gateway:watch
 ```
 
 Note: `pnpm openclaw ...` runs TypeScript directly (via `tsx`). `pnpm build` produces `dist/` for running via Node / the packaged `openclaw` binary.
+
+---
+
+## Demo: OpenClaw Improvements (Now with more sass 😈)
+
+Here are six quick screenshots demonstrating the upgraded experience.
+
+### 1) Control panel glow-up
+![OpenClaw improvement demo 1](./My-openclaw-1.png)
+
+### 2) Smoother workflow, less chaos
+![OpenClaw improvement demo 2](./My-openclaw-2.png)
+
+### 3) Cleaner execution path
+![OpenClaw improvement demo 3](./My-openclaw-3.png)
+
+### 4) Sharper runtime visibility
+![OpenClaw improvement demo 4](./My-openclaw-4.png)
+
+### 5) Better orchestration, fewer headaches
+![OpenClaw improvement demo 5](./My-openclaw-5.png)
+
+### 6) Final form: confident and slightly unhinged
+![OpenClaw improvement demo 6](./My-openclaw-6.png)
