@@ -1,5 +1,5 @@
-## ⚠️ SOLEMN STATEMENT ⚠️ ##
-### ⚠️ This project **does not include any source code** of Anthropic's "Claude Code" and **has not used any source code** of Anthropic's "Claude Code". ###
+## ⚠️ SOLEMN STATEMENT ##
+### This project **does not include any source code** of Anthropic's "Claude Code" and **has not used any source code** of Anthropic's "Claude Code". ###
 
 ---
 ## 🎉 Successfully Built & Running Locally! (2026-04-05) 🎉
