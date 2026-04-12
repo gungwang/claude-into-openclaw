@@ -27,6 +27,64 @@
 
 ---
 
+## 🎉 Hermes Agent 特性集成到 OpenClaw 🎉
+
+我们对 `hermes-agent` 仓库进行了分析。它是一个开源的 AI 编码代理框架。此次分析的目标，是从中提炼出一批适合引入 **OpenClaw** 的改进点，并确保这些改进能够兼容 OpenClaw 当前的整体架构。
+
+重点关注两类能力：
+
+- OpenClaw 目前尚未具备的能力
+- Hermes Agent 在实现质量或完整度上明显优于 OpenClaw 的能力
+
+## 交叉参考
+
+本部分内容建立在 `SPEC_OPENCLOW_IMPROVEMENTS_FROM_CLAW_CODE_ANALYSIS_V2.md` 的前期分析基础之上。
+
+默认假设该文档中的 A 到 G 各项改进方向已经完成实现，或正在推进中。
+需要注意的是，本文中使用的 A 到 G 轨道编号，是专门针对 **Hermes Agent 衍生改进** 的独立编号，与前一份规范中的编号体系互不冲突。
+
+---
+
+### 执行摘要
+
+`hermes-agent` 是一个面向生产环境的 Python AI Agent 框架。它围绕统一的代理与工具能力层进行设计，并通过多种入口对外提供能力，包括 CLI、Gateway、ACP、MCP、Batch 和 RL 等。
+
+它的主要架构优势包括：
+
+- **会话持久化能力强**
+  使用 SQLite WAL 与 FTS5，支持数据库模式迁移、写入竞争处理，以及会话血缘关系追踪。
+
+- **训练与评估体系完整**
+  包含批量轨迹生成、强化学习训练 CLI、工具集分布策略、SWE 基准测试运行器，以及多后端执行环境管理。
+
+- **供应链安全能力较完善**
+  支持威胁模式扫描（20 多个类别）、基于清单的技能同步、URL 安全校验，以及 OSV 漏洞检查。
+
+- **工具生态丰富**
+  覆盖浏览器自动化（10 个工具、3 种后端提供方）、Mixture of Agents、语音 / TTS、图像生成、后台进程监控和检查点管理等能力。
+
+- **插件架构成熟**
+  提供工具调用前后与 LLM 调用前后的 Hook、可替换的上下文引擎、实时消息注入，以及完整的 CLI 生命周期管理。
+
+- **网关平台覆盖范围广**
+  已支持 15 个以上的消息平台，其中包括中国企业常用平台，例如企业微信、钉钉、飞书和微信。
+
+基于以上分析，本文提出了 7 条改进轨道。这些改进能够把 Hermes Agent 级别的能力逐步引入 OpenClaw，同时保持 OpenClaw 现有的 TypeScript 架构、插件系统和频道框架不被破坏。
+
+- [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS.md)
+- [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md.md)
+- [PLAN-hermesAgentAnalysis.prompt.md](./PLAN-hermesAgentAnalysis.prompt.md)
+- [PLAN-hermesAgentAnalysis_zh.prompt.md](PLAN-hermesAgentAnalysis_zh.prompt.md)
+- [HERMES_OPENCLAW_ADRS.md](./HERMES_OPENCLAW_ADRS.md)
+- [HERMES_OPENCLAW_CONTRIBUTOR_GUIDE.md](./HERMES_OPENCLAW_CONTRIBUTOR_GUIDE.md)
+- [HERMES_OPENCLAW_EXECUTION_PLANS.md](./HERMES_OPENCLAW_EXECUTION_PLANS.md)
+- [HERMES_OPENCLAW_TECHNICAL_REFERENCE.md](./HERMES_OPENCLAW_TECHNICAL_REFERENCE.md)
+- [HERMES_TEST_FIXES_TECHNICAL_REPORT.md](./HERMES_TEST_FIXES_TECHNICAL_REPORT.md)
+
+
+
+---
+
 # AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中
 
 🌟 将 Claude Code 的能力集成到 OpenClaw
