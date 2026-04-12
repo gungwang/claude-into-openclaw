@@ -499,3 +499,147 @@ export function recordMessageInjected(
     },
   });
 }
+
+// ── Browser automation events (Track E) ──
+
+export function recordBrowserSessionCreated(
+  journal: SessionEventJournal | undefined,
+  params: { sessionId: string; provider: string; url?: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Browser session ${params.sessionId} created (${params.provider})${params.url ? `: ${params.url}` : ""}`,
+    payload: { eventKind: "browser_session_created", ...params },
+  });
+}
+
+export function recordBrowserSessionClosed(
+  journal: SessionEventJournal | undefined,
+  params: { sessionId: string; reason: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Browser session ${params.sessionId} closed: ${params.reason}`,
+    payload: { eventKind: "browser_session_closed", ...params },
+  });
+}
+
+// ── Mixture of Agents events (Track E) ──
+
+export function recordMoaQuery(
+  journal: SessionEventJournal | undefined,
+  params: { referenceCount: number; respondedCount: number; aggregatorModel: string; durationMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `MoA query: ${params.respondedCount}/${params.referenceCount} refs responded, aggregated by ${params.aggregatorModel} (${params.durationMs.toFixed(0)}ms)`,
+    payload: { eventKind: "moa_query", ...params },
+  });
+}
+
+// ── Process monitor events (Track E) ──
+
+export function recordProcessSpawned(
+  journal: SessionEventJournal | undefined,
+  params: { pid: string; command: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Process spawned: ${params.command} (pid=${params.pid})`,
+    payload: { eventKind: "process_spawned", ...params },
+  });
+}
+
+export function recordProcessKilled(
+  journal: SessionEventJournal | undefined,
+  params: { pid: string; signal: string; exitCode?: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Process killed: pid=${params.pid} signal=${params.signal}${params.exitCode != null ? ` exit=${params.exitCode}` : ""}`,
+    payload: { eventKind: "process_killed", ...params },
+  });
+}
+
+// ── Home Assistant events (Track E) ──
+
+export function recordHaServiceCall(
+  journal: SessionEventJournal | undefined,
+  params: { domain: string; service: string; entityId?: string; success: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "info" : "warn",
+    summary: `HA service ${params.domain}.${params.service}${params.entityId ? ` on ${params.entityId}` : ""}: ${params.success ? "ok" : "failed"}`,
+    payload: { eventKind: "ha_service_call", ...params },
+  });
+}
+
+// ── Gateway platform events (Track F) ──
+
+export function recordGatewayMessageSent(
+  journal: SessionEventJournal | undefined,
+  params: { platform: string; targetId: string; success: boolean; durationMs: number; error?: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "debug" : "warn",
+    summary: `Gateway send to ${params.platform}:${params.targetId}: ${params.success ? "ok" : "failed"} (${params.durationMs.toFixed(0)}ms)${params.error ? ` — ${params.error}` : ""}`,
+    payload: { eventKind: "gateway_message_sent", ...params },
+  });
+}
+
+export function recordGatewayMessageReceived(
+  journal: SessionEventJournal | undefined,
+  params: { platform: string; senderId: string; messageType: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Gateway inbound from ${params.platform}:${params.senderId} (${params.messageType})`,
+    payload: { eventKind: "gateway_message_received", ...params },
+  });
+}
+
+// ── Gateway mirroring events (Track F) ──
+
+export function recordMirrorDelivery(
+  journal: SessionEventJournal | undefined,
+  params: { targetPlatform: string; targetChatId: string; sessionId: string; success: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "debug" : "warn",
+    summary: `Mirror to ${params.targetPlatform}:${params.targetChatId} → session ${params.sessionId}: ${params.success ? "ok" : "failed"}`,
+    payload: { eventKind: "mirror_delivery", ...params },
+  });
+}
+
+// ── Multi-destination delivery events (Track F) ──
+
+export function recordMultiDestinationDelivery(
+  journal: SessionEventJournal | undefined,
+  params: { policy: string; totalTargets: number; delivered: number; failed: number; totalMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.failed > 0 ? "warn" : "info",
+    summary: `Multi-destination (${params.policy}): ${params.delivered}/${params.totalTargets} delivered, ${params.failed} failed (${params.totalMs.toFixed(0)}ms)`,
+    payload: { eventKind: "multi_destination_delivery", ...params },
+  });
+}

@@ -31,6 +31,8 @@ import type { SkillsConfig } from "./types.skills.js";
 import type { SupplyChainSecurityConfig } from "./types.supply-chain-security.js";
 import type { DeveloperExperienceConfig } from "./types.developer-experience.js";
 import type { PluginEnhancementsConfig } from "./types.plugin-enhancements.js";
+import type { AdvancedToolsConfig } from "./types.advanced-tools.js";
+import type { GatewayExpansionConfig } from "./types.gateway-expansion.js";
 import type { ToolsConfig } from "./types.tools.js";
 
 export type OpenClawConfig = {
@@ -134,6 +136,10 @@ export type OpenClawConfig = {
   developerExperience?: DeveloperExperienceConfig;
   /** Plugin enhancements: hook bus, context engine replacement, message injection, plugin toolsets. */
   pluginEnhancements?: PluginEnhancementsConfig;
+  /** Advanced tools: browser automation, mixture-of-agents, voice/TTS, process monitor, Home Assistant. */
+  advancedTools?: AdvancedToolsConfig;
+  /** Gateway expansion: WeCom, DingTalk, Feishu, Mattermost, SMS, Email, Webhook, mirroring, multi-destination. */
+  gatewayExpansion?: GatewayExpansionConfig;
 };
 
 declare const openClawConfigStateBrand: unique symbol;
