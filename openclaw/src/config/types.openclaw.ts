@@ -26,7 +26,14 @@ import type { ModelsConfig } from "./types.models.js";
 import type { NodeHostConfig } from "./types.node-host.js";
 import type { PluginsConfig } from "./types.plugins.js";
 import type { SecretsConfig } from "./types.secrets.js";
+import type { SessionIntelligenceConfig } from "./types.session-intelligence.js";
 import type { SkillsConfig } from "./types.skills.js";
+import type { SupplyChainSecurityConfig } from "./types.supply-chain-security.js";
+import type { DeveloperExperienceConfig } from "./types.developer-experience.js";
+import type { PluginEnhancementsConfig } from "./types.plugin-enhancements.js";
+import type { AdvancedToolsConfig } from "./types.advanced-tools.js";
+import type { GatewayExpansionConfig } from "./types.gateway-expansion.js";
+import type { TrainingPipelineConfig } from "./types.training-pipeline.js";
 import type { ToolsConfig } from "./types.tools.js";
 
 export type OpenClawConfig = {
@@ -122,6 +129,20 @@ export type OpenClawConfig = {
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
   mcp?: McpConfig;
+  /** Session intelligence: persistence, error classification, credential rotation, rate-limit tracking, trajectory compression, smart routing. */
+  sessionIntelligence?: SessionIntelligenceConfig;
+  /** Supply-chain security: skills guard, manifest sync, URL safety, path security. */
+  supplyChainSecurity?: SupplyChainSecurityConfig;
+  /** Developer experience: worktree isolation, prompt caching, context references, budget tracking, checkpoints. */
+  developerExperience?: DeveloperExperienceConfig;
+  /** Plugin enhancements: hook bus, context engine replacement, message injection, plugin toolsets. */
+  pluginEnhancements?: PluginEnhancementsConfig;
+  /** Advanced tools: browser automation, mixture-of-agents, voice/TTS, process monitor, Home Assistant. */
+  advancedTools?: AdvancedToolsConfig;
+  /** Gateway expansion: WeCom, DingTalk, Feishu, Mattermost, SMS, Email, Webhook, mirroring, multi-destination. */
+  gatewayExpansion?: GatewayExpansionConfig;
+  /** Training pipeline: trajectory format, toolset distributions, batch runner, environments, benchmarks, RL CLI. */
+  trainingPipeline?: TrainingPipelineConfig;
 };
 
 declare const openClawConfigStateBrand: unique symbol;

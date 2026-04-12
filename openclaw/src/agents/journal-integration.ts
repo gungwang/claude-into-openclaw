@@ -8,7 +8,13 @@
  */
 
 import type { PolicyDecisionRecord } from "./policy-reason-codes.js";
+import type { ClassifiedError } from "./error-classifier.js";
+import type { ScanResult } from "./skills-guard.js";
+import type { HookInvocationResult } from "./plugin-hooks.js";
+import type { BudgetState } from "./budget-tracker.js";
+import type { CacheApplicationResult } from "./prompt-caching.js";
 import {
+  appendJournalEvent,
   createSessionEventJournal,
   journalCompactionEnd,
   journalCompactionStart,
@@ -181,5 +187,539 @@ export function recordRunError(
       ...(params.provider && { provider: params.provider }),
       ...(params.model && { model: params.model }),
     },
+  });
+}
+
+// ── Error classification events (Track A) ──
+
+export function recordClassifiedError(
+  journal: SessionEventJournal | undefined,
+  classified: ClassifiedError,
+): void {
+  if (!journal) return;
+  journalError(journal, {
+    summary: `[${classified.reason}] ${classified.provider}/${classified.model}: ${classified.message.slice(0, 100)}`,
+    payload: {
+      reason: classified.reason,
+      statusCode: classified.statusCode,
+      provider: classified.provider,
+      model: classified.model,
+      retryable: classified.retryable,
+      shouldCompress: classified.shouldCompress,
+      shouldRotateCredential: classified.shouldRotateCredential,
+      shouldFallback: classified.shouldFallback,
+      cooldownMs: classified.cooldownMs,
+    },
+  });
+}
+
+// ── Credential rotation events (Track A) ──
+
+export function recordCredentialRotation(
+  journal: SessionEventJournal | undefined,
+  params: {
+    provider: string;
+    fromCredentialId: string;
+    toCredentialId?: string;
+    reason: string;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "warn",
+    summary: `Credential rotation: ${params.provider} — ${params.reason}`,
+    payload: {
+      eventKind: "credential_rotation",
+      provider: params.provider,
+      fromCredentialId: params.fromCredentialId,
+      toCredentialId: params.toCredentialId,
+      reason: params.reason,
+    },
+  });
+}
+
+// ── Rate limit events (Track A) ──
+
+export function recordRateLimitWarning(
+  journal: SessionEventJournal | undefined,
+  params: {
+    provider: string;
+    bucketType: string;
+    usagePct: number;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "warn",
+    summary: `Rate limit warning: ${params.provider} ${params.bucketType} at ${params.usagePct.toFixed(0)}%`,
+    payload: {
+      eventKind: "rate_limit_warning",
+      provider: params.provider,
+      bucketType: params.bucketType,
+      usagePct: params.usagePct,
+    },
+  });
+}
+
+// ── Trajectory compression events (Track A) ──
+
+export function recordTrajectoryCompression(
+  journal: SessionEventJournal | undefined,
+  params: {
+    originalTokens: number;
+    compressedTokens: number;
+    reductionPct: number;
+    turnsRemoved: number;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "compaction_end",
+    severity: "info",
+    summary: `Trajectory compressed: ${params.originalTokens}→${params.compressedTokens} tokens (${params.reductionPct.toFixed(1)}% reduction, ${params.turnsRemoved} turns removed)`,
+    payload: {
+      eventKind: "trajectory_compression",
+      ...params,
+    },
+  });
+}
+
+// ── Skills security scan events (Track B) ──
+
+export function recordSkillsScan(
+  journal: SessionEventJournal | undefined,
+  result: ScanResult,
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "policy_decision",
+    severity: result.verdict === "safe" ? "info" : result.verdict === "caution" ? "warn" : "error",
+    summary: `Skills scan [${result.verdict}]: ${result.skillName} — ${result.summary}`,
+    payload: {
+      eventKind: "skills_scan",
+      skillName: result.skillName,
+      trustLevel: result.trustLevel,
+      verdict: result.verdict,
+      findingCount: result.findings.length,
+      source: result.source,
+    },
+  });
+}
+
+// ── Session persistence events (Track A) ──
+
+export function recordSessionPersisted(
+  journal: SessionEventJournal | undefined,
+  params: { sessionId: string; messageCount: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Session persisted: ${params.sessionId} (${params.messageCount} messages)`,
+    payload: {
+      eventKind: "session_persisted",
+      sessionId: params.sessionId,
+      messageCount: params.messageCount,
+    },
+  });
+}
+
+// ── Smart model routing events (Track A) ──
+
+export function recordModelRouting(
+  journal: SessionEventJournal | undefined,
+  params: {
+    selectedModel: string;
+    tier: string;
+    complexityScore: string;
+    reason: string;
+    estimatedCost: number;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "route_selected",
+    severity: "info",
+    summary: `Smart routing: ${params.selectedModel} (${params.tier}, complexity=${params.complexityScore})`,
+    payload: {
+      eventKind: "smart_model_routing",
+      ...params,
+    },
+  });
+}
+
+// ── Worktree events (Track C) ──
+
+export function recordWorktreeCreated(
+  journal: SessionEventJournal | undefined,
+  params: { path: string; branch: string; sessionId: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Worktree created: ${params.branch} at ${params.path}`,
+    payload: {
+      eventKind: "worktree_created",
+      ...params,
+    },
+  });
+}
+
+export function recordWorktreeCleanup(
+  journal: SessionEventJournal | undefined,
+  params: { path: string; removed: boolean; reason: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.removed ? "debug" : "warn",
+    summary: `Worktree cleanup: ${params.reason}`,
+    payload: {
+      eventKind: "worktree_cleanup",
+      ...params,
+    },
+  });
+}
+
+// ── Prompt caching events (Track C) ──
+
+export function recordPromptCaching(
+  journal: SessionEventJournal | undefined,
+  result: CacheApplicationResult,
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Prompt caching [${result.provider}]: ${result.breakpointsApplied} breakpoints applied`,
+    payload: {
+      eventKind: "prompt_caching",
+      provider: result.provider,
+      breakpointsApplied: result.breakpointsApplied,
+    },
+  });
+}
+
+// ── Budget events (Track C) ──
+
+export function recordBudgetExceeded(
+  journal: SessionEventJournal | undefined,
+  state: BudgetState,
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "warn",
+    summary: `Budget exceeded: ${state.exceedReason ?? "unknown"}`,
+    payload: {
+      eventKind: "budget_exceeded",
+      sessionCostUsd: state.sessionCostUsd,
+      turnCostUsd: state.turnCostUsd,
+      turnCount: state.turnCount,
+      exceedReason: state.exceedReason,
+    },
+  });
+}
+
+// ── Checkpoint events (Track C) ──
+
+export function recordCheckpointCreated(
+  journal: SessionEventJournal | undefined,
+  params: { workingDir: string; reason: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Checkpoint created: ${params.reason} in ${params.workingDir}`,
+    payload: {
+      eventKind: "checkpoint_created",
+      ...params,
+    },
+  });
+}
+
+export function recordCheckpointRollback(
+  journal: SessionEventJournal | undefined,
+  params: { workingDir: string; commitHash: string; success: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "info" : "warn",
+    summary: `Checkpoint rollback ${params.success ? "succeeded" : "failed"}: ${params.commitHash}`,
+    payload: {
+      eventKind: "checkpoint_rollback",
+      ...params,
+    },
+  });
+}
+
+// ── Plugin hook bus events (Track D) ──
+
+export function recordHookInvocation(
+  journal: SessionEventJournal | undefined,
+  result: HookInvocationResult,
+): void {
+  if (!journal || result.totalCallbacks === 0) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: result.failed > 0 ? "warn" : "debug",
+    summary: `Hook ${result.hookName}: ${result.succeeded}/${result.totalCallbacks} ok, ${result.failed} failed (${result.durationMs.toFixed(1)}ms)`,
+    payload: {
+      eventKind: "plugin_hook_invocation",
+      hookName: result.hookName,
+      totalCallbacks: result.totalCallbacks,
+      succeeded: result.succeeded,
+      failed: result.failed,
+      durationMs: result.durationMs,
+      ...(result.errors.length > 0 ? { errors: result.errors } : {}),
+    },
+  });
+}
+
+// ── Message injection events (Track D) ──
+
+export function recordMessageInjected(
+  journal: SessionEventJournal | undefined,
+  params: { pluginId: string; role: string; contentLength: number; interrupt: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Message injected by plugin "${params.pluginId}" (${params.role}, ${params.contentLength} chars${params.interrupt ? ", interrupt" : ""})`,
+    payload: {
+      eventKind: "message_injected",
+      ...params,
+    },
+  });
+}
+
+// ── Browser automation events (Track E) ──
+
+export function recordBrowserSessionCreated(
+  journal: SessionEventJournal | undefined,
+  params: { sessionId: string; provider: string; url?: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Browser session ${params.sessionId} created (${params.provider})${params.url ? `: ${params.url}` : ""}`,
+    payload: { eventKind: "browser_session_created", ...params },
+  });
+}
+
+export function recordBrowserSessionClosed(
+  journal: SessionEventJournal | undefined,
+  params: { sessionId: string; reason: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Browser session ${params.sessionId} closed: ${params.reason}`,
+    payload: { eventKind: "browser_session_closed", ...params },
+  });
+}
+
+// ── Mixture of Agents events (Track E) ──
+
+export function recordMoaQuery(
+  journal: SessionEventJournal | undefined,
+  params: { referenceCount: number; respondedCount: number; aggregatorModel: string; durationMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `MoA query: ${params.respondedCount}/${params.referenceCount} refs responded, aggregated by ${params.aggregatorModel} (${params.durationMs.toFixed(0)}ms)`,
+    payload: { eventKind: "moa_query", ...params },
+  });
+}
+
+// ── Process monitor events (Track E) ──
+
+export function recordProcessSpawned(
+  journal: SessionEventJournal | undefined,
+  params: { pid: string; command: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Process spawned: ${params.command} (pid=${params.pid})`,
+    payload: { eventKind: "process_spawned", ...params },
+  });
+}
+
+export function recordProcessKilled(
+  journal: SessionEventJournal | undefined,
+  params: { pid: string; signal: string; exitCode?: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Process killed: pid=${params.pid} signal=${params.signal}${params.exitCode != null ? ` exit=${params.exitCode}` : ""}`,
+    payload: { eventKind: "process_killed", ...params },
+  });
+}
+
+// ── Home Assistant events (Track E) ──
+
+export function recordHaServiceCall(
+  journal: SessionEventJournal | undefined,
+  params: { domain: string; service: string; entityId?: string; success: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "info" : "warn",
+    summary: `HA service ${params.domain}.${params.service}${params.entityId ? ` on ${params.entityId}` : ""}: ${params.success ? "ok" : "failed"}`,
+    payload: { eventKind: "ha_service_call", ...params },
+  });
+}
+
+// ── Gateway platform events (Track F) ──
+
+export function recordGatewayMessageSent(
+  journal: SessionEventJournal | undefined,
+  params: { platform: string; targetId: string; success: boolean; durationMs: number; error?: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "debug" : "warn",
+    summary: `Gateway send to ${params.platform}:${params.targetId}: ${params.success ? "ok" : "failed"} (${params.durationMs.toFixed(0)}ms)${params.error ? ` — ${params.error}` : ""}`,
+    payload: { eventKind: "gateway_message_sent", ...params },
+  });
+}
+
+export function recordGatewayMessageReceived(
+  journal: SessionEventJournal | undefined,
+  params: { platform: string; senderId: string; messageType: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Gateway inbound from ${params.platform}:${params.senderId} (${params.messageType})`,
+    payload: { eventKind: "gateway_message_received", ...params },
+  });
+}
+
+// ── Gateway mirroring events (Track F) ──
+
+export function recordMirrorDelivery(
+  journal: SessionEventJournal | undefined,
+  params: { targetPlatform: string; targetChatId: string; sessionId: string; success: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "debug" : "warn",
+    summary: `Mirror to ${params.targetPlatform}:${params.targetChatId} → session ${params.sessionId}: ${params.success ? "ok" : "failed"}`,
+    payload: { eventKind: "mirror_delivery", ...params },
+  });
+}
+
+// ── Multi-destination delivery events (Track F) ──
+
+export function recordMultiDestinationDelivery(
+  journal: SessionEventJournal | undefined,
+  params: { policy: string; totalTargets: number; delivered: number; failed: number; totalMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.failed > 0 ? "warn" : "info",
+    summary: `Multi-destination (${params.policy}): ${params.delivered}/${params.totalTargets} delivered, ${params.failed} failed (${params.totalMs.toFixed(0)}ms)`,
+    payload: { eventKind: "multi_destination_delivery", ...params },
+  });
+}
+
+// ── Training pipeline events (Track G) ──
+
+export function recordBatchProgress(
+  journal: SessionEventJournal | undefined,
+  params: { runName: string; completed: number; total: number; failed: number; skipped: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.failed > 0 ? "warn" : "info",
+    summary: `Batch "${params.runName}": ${params.completed}/${params.total} done, ${params.failed} failed, ${params.skipped} skipped`,
+    payload: { eventKind: "batch_progress", ...params },
+  });
+}
+
+export function recordTrajectoryGenerated(
+  journal: SessionEventJournal | undefined,
+  params: { runName: string; trajectoryId: string; turns: number; toolCalls: number; model: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Trajectory ${params.trajectoryId}: ${params.turns} turns, ${params.toolCalls} tool calls (${params.model})`,
+    payload: { eventKind: "trajectory_generated", ...params },
+  });
+}
+
+export function recordEnvironmentLifecycle(
+  journal: SessionEventJournal | undefined,
+  params: { backend: string; action: "create" | "cleanup" | "ready_check"; success: boolean; durationMs: number; error?: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "debug" : "warn",
+    summary: `Environment ${params.backend} ${params.action}: ${params.success ? "ok" : "failed"} (${params.durationMs.toFixed(0)}ms)${params.error ? ` — ${params.error}` : ""}`,
+    payload: { eventKind: "environment_lifecycle", ...params },
+  });
+}
+
+export function recordBenchmarkTaskResult(
+  journal: SessionEventJournal | undefined,
+  params: { benchmark: string; taskId: string; taskName: string; passed: boolean; durationMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.passed ? "debug" : "warn",
+    summary: `Benchmark ${params.benchmark} task "${params.taskName}": ${params.passed ? "PASS" : "FAIL"} (${params.durationMs.toFixed(0)}ms)`,
+    payload: { eventKind: "benchmark_task_result", ...params },
+  });
+}
+
+export function recordBenchmarkSummary(
+  journal: SessionEventJournal | undefined,
+  params: { benchmark: string; passRate: number; passed: number; total: number; durationMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Benchmark ${params.benchmark}: ${(params.passRate * 100).toFixed(1)}% pass rate (${params.passed}/${params.total}) in ${params.durationMs.toFixed(0)}ms`,
+    payload: { eventKind: "benchmark_summary", ...params },
+  });
+}
+
+export function recordToolCallParsed(
+  journal: SessionEventJournal | undefined,
+  params: { parser: string; toolCallCount: number; hasContent: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Parser "${params.parser}": extracted ${params.toolCallCount} tool call(s), content=${params.hasContent}`,
+    payload: { eventKind: "tool_call_parsed", ...params },
   });
 }
