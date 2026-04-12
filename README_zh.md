@@ -1,10 +1,12 @@
-## 郑重声明 ##
-### 本项目**不包含** Anthropic "Claude Code" 的任何源代码，也**未使用** Anthropic "Claude Code" 的任何源代码。###
-
+# Claude Code, Hermes Agent, OpenClaw 整合 (三位一体)
+🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉
 ---
-## 🎉 本地构建并运行成功！(2026-04-05) 🎉
+
+### 🎉 Successfully Built & Running! (2026-04-12)  Claude Code, Hermes Agent, and OpenClaw Integration
+> OpenClaw `2026.4.1.2` 已在 Ubuntu 22.04 上**从源码成功构建并本地运行**。
+
+## 🎉 本地构建并运行成功！(2026-04-05)
 > OpenClaw `2026.4.1-beta.1` 已在 Ubuntu 22.04 上**从源码成功构建并本地运行**。
-> 构建过程中修复了两个模块导入路径错误 — 详情请参见 [OPENCLAW-BUILD-ISSUES-FIXES.MD](./OPENCLAW-BUILD-ISSUES-FIXES.MD) 和 [RUNNING-FIX-AFTER-BUILD.md](./RUNNING-FIX-AFTER-BUILD.md)。
 >
 > **构建环境：** Node v22.22.0 · pnpm v10.32.1 (Corepack) · rolldown v1.0.0-rc.12 · TypeScript
 
