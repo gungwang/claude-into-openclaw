@@ -8,7 +8,10 @@
  */
 
 import type { PolicyDecisionRecord } from "./policy-reason-codes.js";
+import type { ClassifiedError } from "./error-classifier.js";
+import type { ScanResult } from "./skills-guard.js";
 import {
+  appendJournalEvent,
   createSessionEventJournal,
   journalCompactionEnd,
   journalCompactionStart,
@@ -180,6 +183,167 @@ export function recordRunError(
     payload: {
       ...(params.provider && { provider: params.provider }),
       ...(params.model && { model: params.model }),
+    },
+  });
+}
+
+// ── Error classification events (Track A) ──
+
+export function recordClassifiedError(
+  journal: SessionEventJournal | undefined,
+  classified: ClassifiedError,
+): void {
+  if (!journal) return;
+  journalError(journal, {
+    summary: `[${classified.reason}] ${classified.provider}/${classified.model}: ${classified.message.slice(0, 100)}`,
+    payload: {
+      reason: classified.reason,
+      statusCode: classified.statusCode,
+      provider: classified.provider,
+      model: classified.model,
+      retryable: classified.retryable,
+      shouldCompress: classified.shouldCompress,
+      shouldRotateCredential: classified.shouldRotateCredential,
+      shouldFallback: classified.shouldFallback,
+      cooldownMs: classified.cooldownMs,
+    },
+  });
+}
+
+// ── Credential rotation events (Track A) ──
+
+export function recordCredentialRotation(
+  journal: SessionEventJournal | undefined,
+  params: {
+    provider: string;
+    fromCredentialId: string;
+    toCredentialId?: string;
+    reason: string;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "warn",
+    summary: `Credential rotation: ${params.provider} — ${params.reason}`,
+    payload: {
+      eventKind: "credential_rotation",
+      provider: params.provider,
+      fromCredentialId: params.fromCredentialId,
+      toCredentialId: params.toCredentialId,
+      reason: params.reason,
+    },
+  });
+}
+
+// ── Rate limit events (Track A) ──
+
+export function recordRateLimitWarning(
+  journal: SessionEventJournal | undefined,
+  params: {
+    provider: string;
+    bucketType: string;
+    usagePct: number;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "warn",
+    summary: `Rate limit warning: ${params.provider} ${params.bucketType} at ${params.usagePct.toFixed(0)}%`,
+    payload: {
+      eventKind: "rate_limit_warning",
+      provider: params.provider,
+      bucketType: params.bucketType,
+      usagePct: params.usagePct,
+    },
+  });
+}
+
+// ── Trajectory compression events (Track A) ──
+
+export function recordTrajectoryCompression(
+  journal: SessionEventJournal | undefined,
+  params: {
+    originalTokens: number;
+    compressedTokens: number;
+    reductionPct: number;
+    turnsRemoved: number;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "compaction_end",
+    severity: "info",
+    summary: `Trajectory compressed: ${params.originalTokens}→${params.compressedTokens} tokens (${params.reductionPct.toFixed(1)}% reduction, ${params.turnsRemoved} turns removed)`,
+    payload: {
+      eventKind: "trajectory_compression",
+      ...params,
+    },
+  });
+}
+
+// ── Skills security scan events (Track B) ──
+
+export function recordSkillsScan(
+  journal: SessionEventJournal | undefined,
+  result: ScanResult,
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "policy_decision",
+    severity: result.verdict === "safe" ? "info" : result.verdict === "caution" ? "warn" : "error",
+    summary: `Skills scan [${result.verdict}]: ${result.skillName} — ${result.summary}`,
+    payload: {
+      eventKind: "skills_scan",
+      skillName: result.skillName,
+      trustLevel: result.trustLevel,
+      verdict: result.verdict,
+      findingCount: result.findings.length,
+      source: result.source,
+    },
+  });
+}
+
+// ── Session persistence events (Track A) ──
+
+export function recordSessionPersisted(
+  journal: SessionEventJournal | undefined,
+  params: { sessionId: string; messageCount: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Session persisted: ${params.sessionId} (${params.messageCount} messages)`,
+    payload: {
+      eventKind: "session_persisted",
+      sessionId: params.sessionId,
+      messageCount: params.messageCount,
+    },
+  });
+}
+
+// ── Smart model routing events (Track A) ──
+
+export function recordModelRouting(
+  journal: SessionEventJournal | undefined,
+  params: {
+    selectedModel: string;
+    tier: string;
+    complexityScore: string;
+    reason: string;
+    estimatedCost: number;
+  },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "route_selected",
+    severity: "info",
+    summary: `Smart routing: ${params.selectedModel} (${params.tier}, complexity=${params.complexityScore})`,
+    payload: {
+      eventKind: "smart_model_routing",
+      ...params,
     },
   });
 }

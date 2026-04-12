@@ -26,7 +26,9 @@ import type { ModelsConfig } from "./types.models.js";
 import type { NodeHostConfig } from "./types.node-host.js";
 import type { PluginsConfig } from "./types.plugins.js";
 import type { SecretsConfig } from "./types.secrets.js";
+import type { SessionIntelligenceConfig } from "./types.session-intelligence.js";
 import type { SkillsConfig } from "./types.skills.js";
+import type { SupplyChainSecurityConfig } from "./types.supply-chain-security.js";
 import type { ToolsConfig } from "./types.tools.js";
 
 export type OpenClawConfig = {
@@ -122,6 +124,10 @@ export type OpenClawConfig = {
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
   mcp?: McpConfig;
+  /** Session intelligence: persistence, error classification, credential rotation, rate-limit tracking, trajectory compression, smart routing. */
+  sessionIntelligence?: SessionIntelligenceConfig;
+  /** Supply-chain security: skills guard, manifest sync, URL safety, path security. */
+  supplyChainSecurity?: SupplyChainSecurityConfig;
 };
 
 declare const openClawConfigStateBrand: unique symbol;
