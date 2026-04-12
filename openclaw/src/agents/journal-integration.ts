@@ -643,3 +643,83 @@ export function recordMultiDestinationDelivery(
     payload: { eventKind: "multi_destination_delivery", ...params },
   });
 }
+
+// ── Training pipeline events (Track G) ──
+
+export function recordBatchProgress(
+  journal: SessionEventJournal | undefined,
+  params: { runName: string; completed: number; total: number; failed: number; skipped: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.failed > 0 ? "warn" : "info",
+    summary: `Batch "${params.runName}": ${params.completed}/${params.total} done, ${params.failed} failed, ${params.skipped} skipped`,
+    payload: { eventKind: "batch_progress", ...params },
+  });
+}
+
+export function recordTrajectoryGenerated(
+  journal: SessionEventJournal | undefined,
+  params: { runName: string; trajectoryId: string; turns: number; toolCalls: number; model: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Trajectory ${params.trajectoryId}: ${params.turns} turns, ${params.toolCalls} tool calls (${params.model})`,
+    payload: { eventKind: "trajectory_generated", ...params },
+  });
+}
+
+export function recordEnvironmentLifecycle(
+  journal: SessionEventJournal | undefined,
+  params: { backend: string; action: "create" | "cleanup" | "ready_check"; success: boolean; durationMs: number; error?: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "debug" : "warn",
+    summary: `Environment ${params.backend} ${params.action}: ${params.success ? "ok" : "failed"} (${params.durationMs.toFixed(0)}ms)${params.error ? ` — ${params.error}` : ""}`,
+    payload: { eventKind: "environment_lifecycle", ...params },
+  });
+}
+
+export function recordBenchmarkTaskResult(
+  journal: SessionEventJournal | undefined,
+  params: { benchmark: string; taskId: string; taskName: string; passed: boolean; durationMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.passed ? "debug" : "warn",
+    summary: `Benchmark ${params.benchmark} task "${params.taskName}": ${params.passed ? "PASS" : "FAIL"} (${params.durationMs.toFixed(0)}ms)`,
+    payload: { eventKind: "benchmark_task_result", ...params },
+  });
+}
+
+export function recordBenchmarkSummary(
+  journal: SessionEventJournal | undefined,
+  params: { benchmark: string; passRate: number; passed: number; total: number; durationMs: number },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Benchmark ${params.benchmark}: ${(params.passRate * 100).toFixed(1)}% pass rate (${params.passed}/${params.total}) in ${params.durationMs.toFixed(0)}ms`,
+    payload: { eventKind: "benchmark_summary", ...params },
+  });
+}
+
+export function recordToolCallParsed(
+  journal: SessionEventJournal | undefined,
+  params: { parser: string; toolCallCount: number; hasContent: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Parser "${params.parser}": extracted ${params.toolCallCount} tool call(s), content=${params.hasContent}`,
+    payload: { eventKind: "tool_call_parsed", ...params },
+  });
+}

@@ -33,6 +33,7 @@ import type { DeveloperExperienceConfig } from "./types.developer-experience.js"
 import type { PluginEnhancementsConfig } from "./types.plugin-enhancements.js";
 import type { AdvancedToolsConfig } from "./types.advanced-tools.js";
 import type { GatewayExpansionConfig } from "./types.gateway-expansion.js";
+import type { TrainingPipelineConfig } from "./types.training-pipeline.js";
 import type { ToolsConfig } from "./types.tools.js";
 
 export type OpenClawConfig = {
@@ -140,6 +141,8 @@ export type OpenClawConfig = {
   advancedTools?: AdvancedToolsConfig;
   /** Gateway expansion: WeCom, DingTalk, Feishu, Mattermost, SMS, Email, Webhook, mirroring, multi-destination. */
   gatewayExpansion?: GatewayExpansionConfig;
+  /** Training pipeline: trajectory format, toolset distributions, batch runner, environments, benchmarks, RL CLI. */
+  trainingPipeline?: TrainingPipelineConfig;
 };
 
 declare const openClawConfigStateBrand: unique symbol;
