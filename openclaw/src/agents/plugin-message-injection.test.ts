@@ -2,60 +2,66 @@ import { describe, expect, it } from "vitest";
 import {
   createMessageInjector,
   type MessageInjectorConfig,
-  type InjectedMessage,
 } from "./plugin-message-injection.js";
 
 describe("createMessageInjector", () => {
   const config: MessageInjectorConfig = {
-    maxInjectedPerTurn: 5,
-    maxTotalTokens: 2000,
+    enabled: true,
+    maxQueueSize: 100,
+    maxContentLength: 50_000,
+    allowedRoles: ["user", "system"],
   };
 
-  it("creates an injector with add and apply methods", () => {
+  it("creates an injector with inject and drain methods", () => {
     const injector = createMessageInjector(config);
-    expect(injector).toHaveProperty("add");
-    expect(injector).toHaveProperty("apply");
-    expect(injector).toHaveProperty("stats");
+    expect(injector).toHaveProperty("inject");
+    expect(injector).toHaveProperty("drain");
+    expect(injector).toHaveProperty("getStats");
   });
 
-  it("adds and applies injected messages", () => {
+  it("injects and drains messages", () => {
     const injector = createMessageInjector(config);
-    injector.add({
+    const result = injector.inject({
       role: "system",
       content: "Remember: the user prefers concise answers.",
       pluginId: "preferences",
       priority: 10,
     });
-    const messages = [
-      { role: "system" as const, content: "You are helpful." },
-      { role: "user" as const, content: "Hi" },
-    ];
-    const result = injector.apply(messages);
-    expect(result.messages.length).toBeGreaterThanOrEqual(messages.length);
-    expect(result.injectedCount).toBe(1);
+    expect(result.ok).toBe(true);
+    expect(injector.queueSize()).toBe(1);
+
+    const drained = injector.drain();
+    expect(drained).toHaveLength(1);
+    expect(drained[0]!.content).toBe(
+      "Remember: the user prefers concise answers.",
+    );
+    expect(drained[0]!.pluginId).toBe("preferences");
+    expect(injector.queueSize()).toBe(0);
   });
 
-  it("respects maxInjectedPerTurn limit", () => {
-    const injector = createMessageInjector({ ...config, maxInjectedPerTurn: 2 });
-    for (let i = 0; i < 5; i++) {
-      injector.add({
-        role: "system",
-        content: `Injection ${i}`,
-        pluginId: `p${i}`,
-        priority: i,
-      });
+  it("respects maxQueueSize limit", () => {
+    const injector = createMessageInjector({ ...config, maxQueueSize: 2 });
+    injector.inject({ content: "m1", pluginId: "p1" });
+    injector.inject({ content: "m2", pluginId: "p2" });
+    const result = injector.inject({ content: "m3", pluginId: "p3" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("Queue full");
     }
-    const result = injector.apply([{ role: "user", content: "Hello" }]);
-    // Only 2 should be injected
-    expect(result.injectedCount).toBeLessThanOrEqual(2);
+    expect(injector.queueSize()).toBe(2);
   });
 
   it("tracks stats correctly", () => {
     const injector = createMessageInjector(config);
-    injector.add({ role: "system", content: "test", pluginId: "p1", priority: 1 });
-    injector.apply([{ role: "user", content: "x" }]);
-    const stats = injector.stats();
-    expect(stats.totalAdded).toBe(1);
-    expect(stats.totalApplied).toBe(1);
+    injector.inject({
+      role: "system",
+      content: "test",
+      pluginId: "p1",
+      priority: 1,
+    });
+    injector.drain();
+    const stats = injector.getStats();
+    expect(stats.totalInjected).toBe(1);
+    expect(stats.totalDrained).toBe(1);
   });
 });

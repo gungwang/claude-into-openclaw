@@ -3,6 +3,8 @@ import {
   applyPromptCaching,
   detectCacheProvider,
   createCacheMetrics,
+  recordCacheApplication,
+  DEFAULT_PROMPT_CACHING_CONFIG,
   type PromptCachingConfig,
   type MessageLike,
   type CacheMetrics,
@@ -19,24 +21,27 @@ describe("detectCacheProvider", () => {
     expect(detectCacheProvider("gpt-4o")).toBe("openai");
   });
 
-  it("returns null for unknown models", () => {
-    expect(detectCacheProvider("some-unknown-model")).toBeNull();
+  it("returns generic for unknown models", () => {
+    expect(detectCacheProvider("some-unknown-model")).toBe("generic");
   });
 });
 
 describe("applyPromptCaching", () => {
   const config: PromptCachingConfig = {
     enabled: true,
-    minTokenThreshold: 10,
+    anthropicCacheTtl: "5m",
+    anthropicMaxBreakpoints: 4,
+    openaiPredictedOutputs: true,
   };
 
-  it("returns marked messages with cache control", () => {
+  it("returns marked messages with cache control for anthropic", () => {
     const messages: MessageLike[] = [
       { role: "system", content: "You are a helpful assistant. ".repeat(20) },
       { role: "user", content: "Hello" },
     ];
-    const result = applyPromptCaching(messages, config, "anthropic");
-    expect(result.applied).toBe(true);
+    const result = applyPromptCaching(messages, "anthropic", config);
+    expect(result.breakpointsApplied).toBeGreaterThan(0);
+    expect(result.provider).toBe("anthropic");
     expect(result.messages.length).toBe(messages.length);
   });
 
@@ -44,24 +49,37 @@ describe("applyPromptCaching", () => {
     const messages: MessageLike[] = [
       { role: "user", content: "Hello" },
     ];
-    const result = applyPromptCaching(messages, { ...config, enabled: false }, "anthropic");
-    expect(result.applied).toBe(false);
+    const result = applyPromptCaching(messages, "anthropic", { ...config, enabled: false });
+    expect(result.breakpointsApplied).toBe(0);
   });
 
-  it("skips caching for null provider", () => {
+  it("skips caching for generic provider", () => {
     const messages: MessageLike[] = [
       { role: "user", content: "Hello" },
     ];
-    const result = applyPromptCaching(messages, config, null);
-    expect(result.applied).toBe(false);
+    const result = applyPromptCaching(messages, "generic", config);
+    expect(result.breakpointsApplied).toBe(0);
+    expect(result.provider).toBe("generic");
   });
 });
 
 describe("createCacheMetrics", () => {
   it("creates empty metrics", () => {
     const metrics = createCacheMetrics();
-    expect(metrics.hits).toBe(0);
-    expect(metrics.misses).toBe(0);
-    expect(metrics.totalTokensSaved).toBe(0);
+    expect(metrics.totalCalls).toBe(0);
+    expect(metrics.breakpointsApplied).toBe(0);
+    expect(metrics.byProvider).toEqual({ anthropic: 0, openai: 0, generic: 0 });
+  });
+
+  it("records cache application", () => {
+    let metrics = createCacheMetrics();
+    metrics = recordCacheApplication(metrics, {
+      messages: [],
+      breakpointsApplied: 3,
+      provider: "anthropic",
+    });
+    expect(metrics.totalCalls).toBe(1);
+    expect(metrics.breakpointsApplied).toBe(3);
+    expect(metrics.byProvider.anthropic).toBe(1);
   });
 });

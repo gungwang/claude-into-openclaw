@@ -2,30 +2,36 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createPluginHookBus,
   createPluginToolsetRegistry,
-  type PluginHookBus,
   type PluginHookBusConfig,
-  type PluginToolsetRegistry,
 } from "./plugin-hooks.js";
 
 describe("createPluginHookBus", () => {
   const config: PluginHookBusConfig = {
-    maxListeners: 10,
-    timeoutMs: 5_000,
+    enabled: true,
+    callbackTimeoutMs: 5_000,
+    faultIsolated: true,
+    maxCallbacksPerHook: 50,
   };
 
   it("creates a bus with registration and invocation", () => {
     const bus = createPluginHookBus(config);
     expect(bus).toHaveProperty("register");
     expect(bus).toHaveProperty("invoke");
-    expect(bus).toHaveProperty("listRegistrations");
+    expect(bus).toHaveProperty("hasCallbacks");
+    expect(bus).toHaveProperty("getStats");
   });
 
   it("registers and invokes hooks", async () => {
     const bus = createPluginHookBus(config);
-    const cb = vi.fn().mockResolvedValue({ ok: true });
-    bus.register("beforeToolCall", cb, { pluginId: "test-plugin" });
+    const cb = vi.fn().mockResolvedValue(undefined);
+    bus.register({
+      pluginId: "test-plugin",
+      hookName: "pre_tool_call",
+      callback: cb,
+      priority: 0,
+    });
 
-    const result = await bus.invoke("beforeToolCall", { toolName: "shell" });
+    const result = await bus.invoke("pre_tool_call", { toolName: "shell" });
     expect(cb).toHaveBeenCalledTimes(1);
     expect(result.errors).toHaveLength(0);
   });
@@ -33,19 +39,34 @@ describe("createPluginHookBus", () => {
   it("catches and reports hook errors", async () => {
     const bus = createPluginHookBus(config);
     const failingCb = vi.fn().mockRejectedValue(new Error("boom"));
-    bus.register("beforeToolCall", failingCb, { pluginId: "bad-plugin" });
+    bus.register({
+      pluginId: "bad-plugin",
+      hookName: "pre_tool_call",
+      callback: failingCb,
+      priority: 0,
+    });
 
-    const result = await bus.invoke("beforeToolCall", {});
+    const result = await bus.invoke("pre_tool_call", {});
     expect(result.errors.length).toBe(1);
-    expect(result.errors[0].message).toContain("boom");
+    expect(result.errors[0]!.error).toContain("boom");
   });
 
-  it("lists registered hooks", () => {
+  it("tracks registered hooks via getStats", () => {
     const bus = createPluginHookBus(config);
-    bus.register("afterToolCall", vi.fn(), { pluginId: "p1" });
-    bus.register("afterToolCall", vi.fn(), { pluginId: "p2" });
-    const regs = bus.listRegistrations("afterToolCall");
-    expect(regs).toHaveLength(2);
+    bus.register({
+      pluginId: "p1",
+      hookName: "post_tool_call",
+      callback: vi.fn(),
+      priority: 0,
+    });
+    bus.register({
+      pluginId: "p2",
+      hookName: "post_tool_call",
+      callback: vi.fn(),
+      priority: 1,
+    });
+    expect(bus.hasCallbacks("post_tool_call")).toBe(true);
+    expect(bus.getStats().post_tool_call).toBe(2);
   });
 });
 
@@ -53,24 +74,28 @@ describe("createPluginToolsetRegistry", () => {
   it("registers and retrieves toolsets", () => {
     const registry = createPluginToolsetRegistry();
     registry.register({
-      pluginId: "my-plugin",
       name: "custom_tools",
-      tools: [{ name: "my_tool", description: "A tool", parameters: {} }],
+      description: "Custom tools",
+      pluginId: "my-plugin",
+      tools: ["my_tool"],
+      dependencies: [],
     });
     const toolsets = registry.list();
     expect(toolsets).toHaveLength(1);
-    expect(toolsets[0].name).toBe("custom_tools");
+    expect(toolsets[0]!.name).toBe("custom_tools");
   });
 
   it("retrieves toolset by name", () => {
     const registry = createPluginToolsetRegistry();
     registry.register({
-      pluginId: "p1",
       name: "search",
-      tools: [{ name: "web_search", description: "Search", parameters: {} }],
+      description: "Search tools",
+      pluginId: "p1",
+      tools: ["web_search"],
+      dependencies: [],
     });
     const ts = registry.get("search");
-    expect(ts).not.toBeNull();
-    expect(ts!.tools[0].name).toBe("web_search");
+    expect(ts).toBeDefined();
+    expect(ts!.tools[0]).toBe("web_search");
   });
 });

@@ -2,13 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createLocalEnvironment,
   createEnvironment,
+  DEFAULT_ENV_CONFIG,
   type ChildProcessSpawner,
-  type ExecutionEnvironment,
+  type EnvironmentConfig,
 } from "./index.js";
 
 function createMockSpawner(exitCode = 0, stdout = "", stderr = ""): ChildProcessSpawner {
   return {
-    spawn: vi.fn().mockResolvedValue({
+    exec: vi.fn().mockResolvedValue({
       exitCode,
       stdout,
       stderr,
@@ -16,10 +17,14 @@ function createMockSpawner(exitCode = 0, stdout = "", stderr = ""): ChildProcess
   };
 }
 
+function localConfig(overrides?: Partial<EnvironmentConfig>): EnvironmentConfig {
+  return { ...DEFAULT_ENV_CONFIG, type: "local", ...overrides };
+}
+
 describe("createLocalEnvironment", () => {
   it("creates an environment with expected interface", () => {
     const spawner = createMockSpawner();
-    const env = createLocalEnvironment(spawner);
+    const env = createLocalEnvironment(localConfig(), spawner);
     expect(env).toHaveProperty("execute");
     expect(env).toHaveProperty("cleanup");
     expect(env).toHaveProperty("isReady");
@@ -29,22 +34,22 @@ describe("createLocalEnvironment", () => {
 
   it("executes commands via the spawner", async () => {
     const spawner = createMockSpawner(0, "hello\n");
-    const env = createLocalEnvironment(spawner);
+    const env = createLocalEnvironment(localConfig(), spawner);
     const result = await env.execute("echo hello");
-    expect(spawner.spawn).toHaveBeenCalled();
+    expect(spawner.exec).toHaveBeenCalled();
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("hello");
   });
 
-  it("reports ready by default", async () => {
-    const spawner = createMockSpawner();
-    const env = createLocalEnvironment(spawner);
+  it("reports ready when echo ok succeeds", async () => {
+    const spawner = createMockSpawner(0, "ok");
+    const env = createLocalEnvironment(localConfig(), spawner);
     expect(await env.isReady()).toBe(true);
   });
 
   it("tracks working directory", () => {
     const spawner = createMockSpawner();
-    const env = createLocalEnvironment(spawner, "/home/user");
+    const env = createLocalEnvironment(localConfig({ cwd: "/home/user" }), spawner);
     expect(env.getCwd()).toBe("/home/user");
     env.setCwd("/tmp");
     expect(env.getCwd()).toBe("/tmp");
@@ -55,17 +60,26 @@ describe("createEnvironment factory", () => {
   const spawner = createMockSpawner();
 
   it("creates local environment", () => {
-    const env = createEnvironment("local", spawner);
+    const env = createEnvironment({ ...DEFAULT_ENV_CONFIG, type: "local" }, spawner);
     expect(env).toBeDefined();
+    expect(env.type).toBe("local");
   });
 
   it("creates docker environment", () => {
-    const env = createEnvironment("docker", spawner, { image: "ubuntu:latest" });
+    const env = createEnvironment(
+      { ...DEFAULT_ENV_CONFIG, type: "docker", dockerImage: "ubuntu:latest" },
+      spawner,
+    );
     expect(env).toBeDefined();
+    expect(env.type).toBe("docker");
   });
 
   it("creates ssh environment", () => {
-    const env = createEnvironment("ssh", spawner, { host: "remote.server", user: "root" });
+    const env = createEnvironment(
+      { ...DEFAULT_ENV_CONFIG, type: "ssh", sshHost: "remote.server", sshUser: "root" },
+      spawner,
+    );
     expect(env).toBeDefined();
+    expect(env.type).toBe("ssh");
   });
 });

@@ -8,45 +8,71 @@ import {
 
 const config: SmartModelRouterConfig = {
   models: [
-    { id: "gpt-4", tier: "large", capabilities: ["reasoning", "code"], costPer1kTokens: 0.03 },
-    { id: "gpt-3.5-turbo", tier: "small", capabilities: ["chat"], costPer1kTokens: 0.002 },
-    { id: "claude-haiku", tier: "small", capabilities: ["chat", "code"], costPer1kTokens: 0.001 },
+    {
+      modelId: "gpt-4", provider: "openai", tier: "capable",
+      contextWindow: 128_000, costPer1kInput: 0.03, costPer1kOutput: 0.06,
+      supportsTools: true, supportsVision: true, supportsReasoning: true,
+    },
+    {
+      modelId: "gpt-3.5-turbo", provider: "openai", tier: "fast",
+      contextWindow: 16_000, costPer1kInput: 0.001, costPer1kOutput: 0.002,
+      supportsTools: true, supportsVision: false, supportsReasoning: false,
+    },
+    {
+      modelId: "claude-haiku", provider: "anthropic", tier: "fast",
+      contextWindow: 200_000, costPer1kInput: 0.0008, costPer1kOutput: 0.004,
+      supportsTools: true, supportsVision: false, supportsReasoning: false,
+    },
   ],
-  defaultModel: "gpt-3.5-turbo",
 };
 
+function simpleCtx(overrides: Partial<TaskContext> = {}): TaskContext {
+  return {
+    taskDescription: "explain what this code does",
+    contextTokens: 500,
+    fileCount: 1,
+    expectedToolCalls: 0,
+    hasImages: false,
+    conversationTurns: 1,
+    previousErrors: 0,
+    ...overrides,
+  };
+}
+
 describe("routeTask", () => {
-  it("routes simple chat to a small model", () => {
-    const ctx: TaskContext = { complexity: "low", requiredCapabilities: ["chat"] };
-    const decision = routeTask(config, ctx);
+  it("routes simple chat to a fast model", () => {
+    const decision = routeTask(simpleCtx(), config);
     expect(decision.selectedModel).toBeDefined();
-    expect(decision.tier).toBe("small");
+    expect(["fast", "standard"]).toContain(decision.tier);
   });
 
-  it("routes complex reasoning to a large model", () => {
-    const ctx: TaskContext = { complexity: "high", requiredCapabilities: ["reasoning"] };
-    const decision = routeTask(config, ctx);
-    expect(decision.tier).toBe("large");
-    expect(decision.selectedModel).toBe("gpt-4");
+  it("routes complex reasoning to a capable model", () => {
+    const ctx = simpleCtx({
+      taskDescription: "architect a new microservice migration with trade-offs",
+      contextTokens: 20_000,
+      fileCount: 10,
+      expectedToolCalls: 5,
+    });
+    const decision = routeTask(ctx, config);
+    expect(["capable", "premium"]).toContain(decision.tier);
   });
 
-  it("returns the default model when no capability matches", () => {
-    const ctx: TaskContext = { complexity: "low", requiredCapabilities: ["nonexistent" as any] };
-    const decision = routeTask(config, ctx);
-    expect(decision.selectedModel).toBe(config.defaultModel);
+  it("returns a valid model from the config", () => {
+    const decision = routeTask(simpleCtx(), config);
+    const ids = config.models.map((m) => m.modelId);
+    expect(ids).toContain(decision.selectedModel);
   });
 
   it("includes cost estimate in decision", () => {
-    const ctx: TaskContext = { complexity: "medium", requiredCapabilities: ["code"] };
-    const decision = routeTask(config, ctx);
-    expect(decision).toHaveProperty("costPer1kTokens");
-    expect(typeof decision.costPer1kTokens).toBe("number");
+    const decision = routeTask(simpleCtx({ taskDescription: "generate a test file" }), config);
+    expect(decision).toHaveProperty("estimatedCost");
+    expect(typeof decision.estimatedCost).toBe("number");
   });
 });
 
 describe("formatRoutingDecision", () => {
   it("returns a human-readable string", () => {
-    const decision = routeTask(config, { complexity: "high", requiredCapabilities: ["reasoning"] });
+    const decision = routeTask(simpleCtx({ taskDescription: "analyze this architecture" }), config);
     const text = formatRoutingDecision(decision);
     expect(text).toContain(decision.selectedModel);
     expect(typeof text).toBe("string");

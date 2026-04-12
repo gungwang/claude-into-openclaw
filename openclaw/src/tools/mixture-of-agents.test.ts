@@ -17,41 +17,49 @@ describe("getMoaToolDefinition", () => {
 
 describe("executeMoaQuery", () => {
   const config: MoaConfig = {
+    enabled: true,
     referenceModels: [
-      { id: "model-a", provider: "openai" },
-      { id: "model-b", provider: "anthropic" },
+      { id: "model-a", provider: "openai", name: "Model A" },
+      { id: "model-b", provider: "anthropic", name: "Model B" },
     ],
-    aggregatorModel: { id: "gpt-4", provider: "openai" },
+    aggregatorModel: { id: "gpt-4", provider: "openai", name: "GPT-4 Aggregator" },
+    referenceTemperature: 0.7,
+    aggregatorTemperature: 0.4,
+    minSuccessfulReferences: 1,
     maxReferenceTokens: 1000,
-    temperature: 0.7,
+    maxAggregatorTokens: 1000,
+    referenceTimeoutMs: 120_000,
   };
 
   it("calls reference models and aggregator", async () => {
     const caller: LlmCaller = vi.fn()
-      .mockResolvedValueOnce("Answer from model A")
-      .mockResolvedValueOnce("Answer from model B")
-      .mockResolvedValueOnce("Aggregated final answer");
+      .mockResolvedValueOnce({ content: "Answer from model A" })
+      .mockResolvedValueOnce({ content: "Answer from model B" })
+      .mockResolvedValueOnce({ content: "Aggregated final answer" });
 
     const result = await executeMoaQuery(
       "What is 2+2?",
-      config,
       caller,
+      config,
     );
 
     expect(caller).toHaveBeenCalledTimes(3);
-    expect(result.answer).toBe("Aggregated final answer");
+    expect(result.content).toBe("Aggregated final answer");
     expect(result.references).toHaveLength(2);
+    expect(result.aggregated).toBe(true);
+    expect(result.successfulReferences).toBe(2);
   });
 
   it("handles reference model failures gracefully", async () => {
     const caller: LlmCaller = vi.fn()
       .mockRejectedValueOnce(new Error("model-a timeout"))
-      .mockResolvedValueOnce("Answer from model B")
-      .mockResolvedValueOnce("Final answer with partial refs");
+      .mockResolvedValueOnce({ content: "Answer from model B" })
+      .mockResolvedValueOnce({ content: "Final answer with partial refs" });
 
-    const result = await executeMoaQuery("query", config, caller);
+    const result = await executeMoaQuery("query", caller, config);
     // Should still produce a result using the successful reference
-    expect(result.answer).toBeDefined();
-    expect(result.references.length).toBeLessThanOrEqual(2);
+    expect(result.content).toBeDefined();
+    expect(result.references).toHaveLength(2);
+    expect(result.successfulReferences).toBe(1);
   });
 });

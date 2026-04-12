@@ -16,7 +16,8 @@ function makeBucket(overrides: Partial<RateLimitBucket> = {}): RateLimitBucket {
   return {
     limit: 100,
     remaining: 60,
-    resetAtEpochSeconds: Math.floor(Date.now() / 1000) + 60,
+    resetSeconds: 60,
+    capturedAt: Date.now(),
     ...overrides,
   };
 }
@@ -26,21 +27,19 @@ describe("bucket helpers", () => {
     expect(bucketUsed(makeBucket({ limit: 100, remaining: 60 }))).toBe(40);
   });
 
-  it("bucketUsagePct returns fraction used", () => {
-    expect(bucketUsagePct(makeBucket({ limit: 100, remaining: 0 }))).toBeCloseTo(1.0);
-    expect(bucketUsagePct(makeBucket({ limit: 100, remaining: 100 }))).toBeCloseTo(0.0);
+  it("bucketUsagePct returns percentage used", () => {
+    expect(bucketUsagePct(makeBucket({ limit: 100, remaining: 0 }))).toBeCloseTo(100);
+    expect(bucketUsagePct(makeBucket({ limit: 100, remaining: 100 }))).toBeCloseTo(0);
   });
 
   it("bucketRemainingSecondsNow returns positive for future reset", () => {
-    const future = Math.floor(Date.now() / 1000) + 120;
-    const secs = bucketRemainingSecondsNow(makeBucket({ resetAtEpochSeconds: future }));
+    const secs = bucketRemainingSecondsNow(makeBucket({ resetSeconds: 120, capturedAt: Date.now() }));
     expect(secs).toBeGreaterThan(0);
     expect(secs).toBeLessThanOrEqual(120);
   });
 
   it("bucketRemainingSecondsNow returns 0 for past reset", () => {
-    const past = Math.floor(Date.now() / 1000) - 10;
-    expect(bucketRemainingSecondsNow(makeBucket({ resetAtEpochSeconds: past }))).toBe(0);
+    expect(bucketRemainingSecondsNow(makeBucket({ resetSeconds: 5, capturedAt: Date.now() - 10_000 }))).toBe(0);
   });
 });
 
@@ -49,33 +48,30 @@ describe("parseRateLimitHeaders", () => {
     const headers: Record<string, string | undefined> = {
       "x-ratelimit-limit-requests": "100",
       "x-ratelimit-remaining-requests": "99",
-      "x-ratelimit-reset-requests": "1s",
+      "x-ratelimit-reset-requests": "1",
       "x-ratelimit-limit-tokens": "10000",
       "x-ratelimit-remaining-tokens": "9500",
-      "x-ratelimit-reset-tokens": "6s",
+      "x-ratelimit-reset-tokens": "6",
     };
-    const state = parseRateLimitHeaders(headers);
-    expect(state).not.toBeNull();
+    const state = parseRateLimitHeaders(headers, "openai");
+    expect(state).not.toBeUndefined();
     if (state) {
       expect(hasRateLimitData(state)).toBe(true);
     }
   });
 
-  it("returns null when no rate limit headers present", () => {
-    const state = parseRateLimitHeaders({});
-    // Either null or a state with no data
-    if (state !== null) {
-      expect(hasRateLimitData(state)).toBe(false);
-    }
+  it("returns undefined when no rate limit headers present", () => {
+    const state = parseRateLimitHeaders({}, "openai");
+    expect(state).toBeUndefined();
   });
 });
 
 describe("rateLimitAgeSeconds", () => {
   it("returns positive age for past timestamp", () => {
     const state: RateLimitState = {
-      updatedAt: Date.now() - 5000,
-      requests: makeBucket(),
-      tokens: makeBucket(),
+      provider: "openai",
+      capturedAt: Date.now() - 5000,
+      requestsPerMinute: makeBucket(),
     };
     expect(rateLimitAgeSeconds(state)).toBeGreaterThanOrEqual(4);
   });
@@ -84,9 +80,10 @@ describe("rateLimitAgeSeconds", () => {
 describe("formatRateLimitDisplay", () => {
   it("formats a non-empty state", () => {
     const state: RateLimitState = {
-      updatedAt: Date.now(),
-      requests: makeBucket({ limit: 100, remaining: 50 }),
-      tokens: makeBucket({ limit: 10000, remaining: 5000 }),
+      provider: "openai",
+      capturedAt: Date.now(),
+      requestsPerMinute: makeBucket({ limit: 100, remaining: 50 }),
+      tokensPerMinute: makeBucket({ limit: 10000, remaining: 5000 }),
     };
     const text = formatRateLimitDisplay(state);
     expect(text).toContain("50");
@@ -96,9 +93,10 @@ describe("formatRateLimitDisplay", () => {
 describe("formatRateLimitCompact", () => {
   it("returns a short string", () => {
     const state: RateLimitState = {
-      updatedAt: Date.now(),
-      requests: makeBucket({ limit: 100, remaining: 90 }),
-      tokens: makeBucket({ limit: 10000, remaining: 9000 }),
+      provider: "openai",
+      capturedAt: Date.now(),
+      requestsPerMinute: makeBucket({ limit: 100, remaining: 90 }),
+      tokensPerMinute: makeBucket({ limit: 10000, remaining: 9000 }),
     };
     const compact = formatRateLimitCompact(state);
     expect(typeof compact).toBe("string");

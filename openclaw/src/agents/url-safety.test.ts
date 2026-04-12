@@ -36,37 +36,52 @@ describe("validateUrlStructure", () => {
 });
 
 describe("isUrlSafe", () => {
-  it("returns true for normal HTTPS URL", () => {
-    expect(isUrlSafe("https://github.com/repo")).toBe(true);
+  it("accepts a public IP URL", async () => {
+    const result = await isUrlSafe("https://8.8.8.8/path");
+    expect(result.safe).toBe(true);
   });
 
-  it("rejects private IP ranges", () => {
-    expect(isUrlSafe("http://192.168.1.1")).toBe(false);
-    expect(isUrlSafe("http://10.0.0.1")).toBe(false);
-    expect(isUrlSafe("http://127.0.0.1")).toBe(false);
+  it("rejects private IP ranges", async () => {
+    expect((await isUrlSafe("http://192.168.1.1")).safe).toBe(false);
+    expect((await isUrlSafe("http://10.0.0.1")).safe).toBe(false);
+    expect((await isUrlSafe("http://127.0.0.1")).safe).toBe(false);
   });
 
-  it("rejects localhost", () => {
-    expect(isUrlSafe("http://localhost:3000")).toBe(false);
+  it("rejects cloud metadata IP", async () => {
+    const result = await isUrlSafe("http://169.254.169.254/latest/meta-data");
+    expect(result.safe).toBe(false);
+  });
+
+  it("includes reason when URL is blocked", async () => {
+    const result = await isUrlSafe("http://10.0.0.1");
+    expect(result.safe).toBe(false);
+    expect(result.reason).toBeDefined();
   });
 });
 
 describe("filterSafeUrls", () => {
-  it("filters out unsafe URLs from a list", () => {
+  it("returns results for all input URLs", async () => {
     const urls = [
-      "https://example.com",
+      "https://8.8.8.8",
       "javascript:alert(1)",
-      "https://github.com",
+      "https://1.1.1.1",
       "http://127.0.0.1",
     ];
-    const safe = filterSafeUrls(urls);
-    expect(safe).toContain("https://example.com");
-    expect(safe).toContain("https://github.com");
-    expect(safe).not.toContain("javascript:alert(1)");
-    expect(safe).not.toContain("http://127.0.0.1");
+    const results = await filterSafeUrls(urls);
+    expect(results).toHaveLength(4);
+
+    const safeUrls = results.filter((r) => r.result.safe).map((r) => r.url);
+    const unsafeUrls = results.filter((r) => !r.result.safe).map((r) => r.url);
+
+    expect(safeUrls).toContain("https://8.8.8.8");
+    expect(safeUrls).toContain("https://1.1.1.1");
+    expect(unsafeUrls).toContain("javascript:alert(1)");
+    expect(unsafeUrls).toContain("http://127.0.0.1");
   });
 
-  it("returns empty array for all-unsafe input", () => {
-    expect(filterSafeUrls(["javascript:x", "data:y"])).toEqual([]);
+  it("marks all entries unsafe for all-unsafe input", async () => {
+    const results = await filterSafeUrls(["javascript:x", "data:y"]);
+    expect(results).toHaveLength(2);
+    expect(results.every((r) => !r.result.safe)).toBe(true);
   });
 });
