@@ -355,7 +355,7 @@ export function classifyApiError(params: ClassifyErrorParams): ClassifiedError {
     if (TRANSPORT_ERROR_TYPES.has(errorCode)) {
       // Server disconnect + large session → probable context overflow
       if (
-        matchesAnyPattern(errorCode, ["ECONNRESET", "EPIPE"]) &&
+        matchesAnyPattern(errorCode, ["econnreset", "epipe"]) &&
         approxTokens !== undefined &&
         contextLength !== undefined &&
         approxTokens > contextLength * 0.8

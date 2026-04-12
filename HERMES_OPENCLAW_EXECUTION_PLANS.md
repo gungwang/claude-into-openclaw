@@ -190,3 +190,77 @@ ccccca3  docs: technical reference
 | Chinese platform API keys missing | All adapters work with injected HTTP clients | ✅ Testable without credentials |
 | Training on non-Linux host | `ExecutionEnvironment` abstraction over `child_process` | ✅ Docker/SSH available |
 | `tsc` breakage across 54+ files | Incremental phase commits with zero-error gates | ✅ All phases clean |
+
+========================================
+
+Yes, use corepack pnpm exec vitest run. The project declares "packageManager": "pnpm@10.32.1" and corepack ensures the correct pnpm version. Both npx vitest and corepack pnpm exec vitest work, but the canonical form matches what the existing technical reference uses and guarantees the pinned pnpm version.
+
+Here's how to manually test all the Hermes-ported features:
+
+
+
+cd /home/wang/projects/claud-code-src/claw-code/openclaw
+
+# ── Track A: Session Intelligence ──
+corepack pnpm exec vitest run src/agents/error-classifier.test.ts
+corepack pnpm exec vitest run src/agents/credential-pool.test.ts
+corepack pnpm exec vitest run src/agents/rate-limit-tracker.test.ts
+corepack pnpm exec vitest run src/agents/session-persistence.test.ts
+corepack pnpm exec vitest run src/agents/trajectory-compressor.test.ts
+corepack pnpm exec vitest run src/agents/smart-model-routing.test.ts
+
+# ── Track B: Supply Chain Security ──
+corepack pnpm exec vitest run src/agents/skills-guard.test.ts
+corepack pnpm exec vitest run src/agents/skills-sync.test.ts
+corepack pnpm exec vitest run src/agents/url-safety.test.ts
+corepack pnpm exec vitest run src/agents/path-security.test.ts
+
+# ── Track C: Developer Experience ──
+corepack pnpm exec vitest run src/agents/git-worktree.test.ts
+corepack pnpm exec vitest run src/agents/prompt-caching.test.ts
+corepack pnpm exec vitest run src/agents/context-references.test.ts
+corepack pnpm exec vitest run src/agents/budget-tracker.test.ts
+corepack pnpm exec vitest run src/tools/checkpoint-manager.test.ts
+
+# ── Track D: Plugin Enhancements ──
+corepack pnpm exec vitest run src/agents/plugin-hooks.test.ts
+corepack pnpm exec vitest run src/agents/plugin-context-engine.test.ts
+corepack pnpm exec vitest run src/agents/plugin-message-injection.test.ts
+
+# ── Track E: Advanced Tools ──
+corepack pnpm exec vitest run src/tools/browser-automation.test.ts
+corepack pnpm exec vitest run src/tools/mixture-of-agents.test.ts
+
+# ── Track F: Gateway Platforms ──
+corepack pnpm exec vitest run src/channels/wecom.test.ts
+corepack pnpm exec vitest run src/channels/multi-destination-delivery.test.ts
+
+# ── Track G: Training Pipeline ──
+corepack pnpm exec vitest run src/training/trajectory-format.test.ts
+corepack pnpm exec vitest run src/training/toolset-distributions.test.ts
+
+# ── All Hermes tests at once ──
+corepack pnpm exec vitest run \
+  src/agents/error-classifier.test.ts \
+  src/agents/credential-pool.test.ts \
+  src/agents/rate-limit-tracker.test.ts \
+  src/agents/session-persistence.test.ts \
+  src/agents/trajectory-compressor.test.ts \
+  src/agents/smart-model-routing.test.ts \
+  src/agents/skills-guard.test.ts \
+  src/agents/skills-sync.test.ts \
+  src/agents/url-safety.test.ts \
+  src/agents/path-security.test.ts \
+  src/agents/prompt-caching.test.ts \
+  src/agents/context-references.test.ts \
+  src/agents/budget-tracker.test.ts \
+  src/agents/plugin-hooks.test.ts \
+  src/agents/plugin-context-engine.test.ts \
+  src/agents/plugin-message-injection.test.ts \
+  src/tools/mixture-of-agents.test.ts \
+  src/channels/multi-destination-delivery.test.ts \
+  src/training/trajectory-format.test.ts \
+  src/training/toolset-distributions.test.ts
+
+# ── Type-check only (no execution) ──
+corepack pnpm exec tsc --noEmit
