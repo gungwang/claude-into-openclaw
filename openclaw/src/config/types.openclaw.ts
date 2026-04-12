@@ -29,6 +29,8 @@ import type { SecretsConfig } from "./types.secrets.js";
 import type { SessionIntelligenceConfig } from "./types.session-intelligence.js";
 import type { SkillsConfig } from "./types.skills.js";
 import type { SupplyChainSecurityConfig } from "./types.supply-chain-security.js";
+import type { DeveloperExperienceConfig } from "./types.developer-experience.js";
+import type { PluginEnhancementsConfig } from "./types.plugin-enhancements.js";
 import type { ToolsConfig } from "./types.tools.js";
 
 export type OpenClawConfig = {
@@ -128,6 +130,10 @@ export type OpenClawConfig = {
   sessionIntelligence?: SessionIntelligenceConfig;
   /** Supply-chain security: skills guard, manifest sync, URL safety, path security. */
   supplyChainSecurity?: SupplyChainSecurityConfig;
+  /** Developer experience: worktree isolation, prompt caching, context references, budget tracking, checkpoints. */
+  developerExperience?: DeveloperExperienceConfig;
+  /** Plugin enhancements: hook bus, context engine replacement, message injection, plugin toolsets. */
+  pluginEnhancements?: PluginEnhancementsConfig;
 };
 
 declare const openClawConfigStateBrand: unique symbol;

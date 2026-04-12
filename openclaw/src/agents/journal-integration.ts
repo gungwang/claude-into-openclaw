@@ -10,6 +10,9 @@
 import type { PolicyDecisionRecord } from "./policy-reason-codes.js";
 import type { ClassifiedError } from "./error-classifier.js";
 import type { ScanResult } from "./skills-guard.js";
+import type { HookInvocationResult } from "./plugin-hooks.js";
+import type { BudgetState } from "./budget-tracker.js";
+import type { CacheApplicationResult } from "./prompt-caching.js";
 import {
   appendJournalEvent,
   createSessionEventJournal,
@@ -343,6 +346,155 @@ export function recordModelRouting(
     summary: `Smart routing: ${params.selectedModel} (${params.tier}, complexity=${params.complexityScore})`,
     payload: {
       eventKind: "smart_model_routing",
+      ...params,
+    },
+  });
+}
+
+// ── Worktree events (Track C) ──
+
+export function recordWorktreeCreated(
+  journal: SessionEventJournal | undefined,
+  params: { path: string; branch: string; sessionId: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Worktree created: ${params.branch} at ${params.path}`,
+    payload: {
+      eventKind: "worktree_created",
+      ...params,
+    },
+  });
+}
+
+export function recordWorktreeCleanup(
+  journal: SessionEventJournal | undefined,
+  params: { path: string; removed: boolean; reason: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.removed ? "debug" : "warn",
+    summary: `Worktree cleanup: ${params.reason}`,
+    payload: {
+      eventKind: "worktree_cleanup",
+      ...params,
+    },
+  });
+}
+
+// ── Prompt caching events (Track C) ──
+
+export function recordPromptCaching(
+  journal: SessionEventJournal | undefined,
+  result: CacheApplicationResult,
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Prompt caching [${result.provider}]: ${result.breakpointsApplied} breakpoints applied`,
+    payload: {
+      eventKind: "prompt_caching",
+      provider: result.provider,
+      breakpointsApplied: result.breakpointsApplied,
+    },
+  });
+}
+
+// ── Budget events (Track C) ──
+
+export function recordBudgetExceeded(
+  journal: SessionEventJournal | undefined,
+  state: BudgetState,
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "warn",
+    summary: `Budget exceeded: ${state.exceedReason ?? "unknown"}`,
+    payload: {
+      eventKind: "budget_exceeded",
+      sessionCostUsd: state.sessionCostUsd,
+      turnCostUsd: state.turnCostUsd,
+      turnCount: state.turnCount,
+      exceedReason: state.exceedReason,
+    },
+  });
+}
+
+// ── Checkpoint events (Track C) ──
+
+export function recordCheckpointCreated(
+  journal: SessionEventJournal | undefined,
+  params: { workingDir: string; reason: string },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "debug",
+    summary: `Checkpoint created: ${params.reason} in ${params.workingDir}`,
+    payload: {
+      eventKind: "checkpoint_created",
+      ...params,
+    },
+  });
+}
+
+export function recordCheckpointRollback(
+  journal: SessionEventJournal | undefined,
+  params: { workingDir: string; commitHash: string; success: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: params.success ? "info" : "warn",
+    summary: `Checkpoint rollback ${params.success ? "succeeded" : "failed"}: ${params.commitHash}`,
+    payload: {
+      eventKind: "checkpoint_rollback",
+      ...params,
+    },
+  });
+}
+
+// ── Plugin hook bus events (Track D) ──
+
+export function recordHookInvocation(
+  journal: SessionEventJournal | undefined,
+  result: HookInvocationResult,
+): void {
+  if (!journal || result.totalCallbacks === 0) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: result.failed > 0 ? "warn" : "debug",
+    summary: `Hook ${result.hookName}: ${result.succeeded}/${result.totalCallbacks} ok, ${result.failed} failed (${result.durationMs.toFixed(1)}ms)`,
+    payload: {
+      eventKind: "plugin_hook_invocation",
+      hookName: result.hookName,
+      totalCallbacks: result.totalCallbacks,
+      succeeded: result.succeeded,
+      failed: result.failed,
+      durationMs: result.durationMs,
+      ...(result.errors.length > 0 ? { errors: result.errors } : {}),
+    },
+  });
+}
+
+// ── Message injection events (Track D) ──
+
+export function recordMessageInjected(
+  journal: SessionEventJournal | undefined,
+  params: { pluginId: string; role: string; contentLength: number; interrupt: boolean },
+): void {
+  if (!journal) return;
+  appendJournalEvent(journal, {
+    type: "custom",
+    severity: "info",
+    summary: `Message injected by plugin "${params.pluginId}" (${params.role}, ${params.contentLength} chars${params.interrupt ? ", interrupt" : ""})`,
+    payload: {
+      eventKind: "message_injected",
       ...params,
     },
   });
