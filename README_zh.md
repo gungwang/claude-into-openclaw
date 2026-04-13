@@ -89,6 +89,8 @@
 
 # AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中
 
+-[AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中](https://youtu.be/SRrFzvGBw7Y)
+
 🌟 将 Claude Code 的能力集成到 OpenClaw
 
 这个项目的目标，是把 Claude Code 中一些非常有价值的设计理念和功能，引入到 OpenClaw 智能体平台。简单来说，我们希望让 OpenClaw 更安全、更聪明、更强大、更高效。
