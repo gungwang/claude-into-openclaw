@@ -50,7 +50,7 @@ The `hermes-agent` codebase is a **production-grade Python AI agent framework** 
 This specification identifies 7 improvement tracks that would bring hermes-agent–caliber capabilities to OpenClaw while preserving OpenClaw's existing TypeScript architecture, plugin system, and channel framework.
 
 - [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS.md)
-- [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md.md)
+- [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md)
 - [PLAN-hermesAgentAnalysis.prompt.md](./PLAN-hermesAgentAnalysis.prompt.md)
 - [PLAN-hermesAgentAnalysis_zh.prompt.md](PLAN-hermesAgentAnalysis_zh.prompt.md)
 - [HERMES_OPENCLAW_ADRS.md](./HERMES_OPENCLAW_ADRS.md)

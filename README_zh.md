@@ -74,7 +74,7 @@
 基于以上分析，本文提出了 7 条改进轨道。这些改进能够把 Hermes Agent 级别的能力逐步引入 OpenClaw，同时保持 OpenClaw 现有的 TypeScript 架构、插件系统和频道框架不被破坏。
 
 - [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS.md)
-- [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md.md)
+- [SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md](./SPEC_OPENCLOW_IMPROVEMENTS_FROM_HERMES_AGENT_ANALYSIS_zh.md)
 - [PLAN-hermesAgentAnalysis.prompt.md](./PLAN-hermesAgentAnalysis.prompt.md)
 - [PLAN-hermesAgentAnalysis_zh.prompt.md](PLAN-hermesAgentAnalysis_zh.prompt.md)
 - [HERMES_OPENCLAW_ADRS.md](./HERMES_OPENCLAW_ADRS.md)
