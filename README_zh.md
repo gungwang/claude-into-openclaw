@@ -31,6 +31,9 @@
 
 ## 🎉 Hermes Agent 特性集成到 OpenClaw 🎉
 
+[![Claude Code, Hermes Agent, OpenClaw 整合 (三位一体)](https://img.youtube.com/vi/GIYJcpPxsQY/maxresdefault.jpg)](https://youtu.be/GIYJcpPxsQY)
+
+
 我们对 `hermes-agent` 仓库进行了分析。它是一个开源的 AI 编码代理框架。此次分析的目标，是从中提炼出一批适合引入 **OpenClaw** 的改进点，并确保这些改进能够兼容 OpenClaw 当前的整体架构。
 
 重点关注两类能力：

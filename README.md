@@ -28,6 +28,8 @@
 ---
 
 ## 🎉Hermes Agent Features integrated into OpenClaw🎉
+- YouTube Video:
+[![Claude Code, Hermes Agent, OpenClaw 整合 (三位一体)](https://img.youtube.com/vi/GIYJcpPxsQY/maxresdefault.jpg)](https://youtu.be/GIYJcpPxsQY)
 
 Analyze the `hermes-agent` repository as an open-source AI coding agent framework and extract practical improvements for **OpenClaw** that are compatible with OpenClaw's current architecture. Identifies features absent from or significantly superior to OpenClaw's existing capabilities.
 
