@@ -89,7 +89,7 @@
 
 # AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中
 
--[AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中](https://youtu.be/SRrFzvGBw7Y)
+- [![AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中](https://img.youtube.com/vi/SRrFzvGBw7Y/maxresdefault.jpg)](https://youtu.be/SRrFzvGBw7Y)
 
 🌟 将 Claude Code 的能力集成到 OpenClaw
 

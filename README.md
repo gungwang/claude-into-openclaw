@@ -63,7 +63,7 @@ This specification identifies 7 improvement tracks that would bring hermes-agent
 
 ## 🎉Claude Features integrated into OpenClaw🎉
 
--[AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中](https://youtu.be/SRrFzvGBw7Y)
+- [![AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中](https://img.youtube.com/vi/SRrFzvGBw7Y/maxresdefault.jpg)](https://youtu.be/SRrFzvGBw7Y)
 
 This repository serves as a bridge between Claude Code's architectural insights and OpenClaw's agent platform. By analyzing Claude Code's tool/command inventory, agent harness patterns, and runtime structures, we aim to enhance OpenClaw with:
 
