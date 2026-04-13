@@ -31,6 +31,7 @@
 
 ## 🎉 Hermes Agent 特性集成到 OpenClaw 🎉
 
+- YouTube Video: Claude Code, Hermes Agent, OpenClaw 整合 (三位一体)
 [![Claude Code, Hermes Agent, OpenClaw 整合 (三位一体)](https://img.youtube.com/vi/GIYJcpPxsQY/maxresdefault.jpg)](https://youtu.be/GIYJcpPxsQY)
 
 
@@ -92,7 +93,7 @@
 
 # AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中
 
-- YouTube Video:
+- YouTube Video: AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中
 [![AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中](https://img.youtube.com/vi/SRrFzvGBw7Y/maxresdefault.jpg)](https://youtu.be/SRrFzvGBw7Y)
 
 🌟 将 Claude Code 的能力集成到 OpenClaw
