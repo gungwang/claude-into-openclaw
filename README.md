@@ -416,21 +416,31 @@ These four deliver high operational value without destabilizing existing loop/ru
 
 ==============================================================
 
-# Setup is same as the Original OpenClaw
+## Install (recommended)
 
-Clone the repository:
+Runtime: **Node 24 (recommended) or Node 22.16+**.
 
 ```bash
-git clone https://github.com/gungwang/claude-code-openclaw.git
-# The openclaw is a sub-directory of this project (Current Version 3.31).
-cd claude-code-openclaw/openclaw
+git clone https://github.com/gungwang/claude-into-openclaw.git
+cd claude-into-openclaw/openclaw
+
+pnpm install
+pnpm ui:build # auto-installs UI deps on first run
+pnpm build
+
+npm install -g .
+
+openclaw onboard --install-daemon
+
+# Dev loop (auto-reload on source/config changes)
+pnpm gateway:watch
 ```
+
+OpenClaw Onboard installs the Gateway daemon (launchd/systemd user service) so it stays running.
 
 ## Quick start (TL;DR)
 
 Runtime: **Node 24 (recommended) or Node 22.16+**.
-
-Full beginner guide (auth, pairing, channels): [Getting started](https://docs.openclaw.ai/start/getting-started)
 
 ```bash
 openclaw onboard --install-daemon
@@ -444,8 +454,6 @@ openclaw message send --to +1234567890 --message "Hello from OpenClaw"
 openclaw agent --message "Ship checklist" --thinking high
 ```
 
-Upgrading? [Updating guide](https://docs.openclaw.ai/install/updating) (and run `openclaw doctor`).
-
 ## Development channels
 
 - **stable**: tagged releases (`vYYYY.M.D` or `vYYYY.M.D-<patch>`), npm dist-tag `latest`.
@@ -453,26 +461,6 @@ Upgrading? [Updating guide](https://docs.openclaw.ai/install/updating) (and run 
 - **dev**: moving head of `main`, npm dist-tag `dev` (when published).
 
 Switch channels (git + npm): `openclaw update --channel stable|beta|dev`.
-Details: [Development channels](https://docs.openclaw.ai/install/development-channels).
-
-## From source (development)
-
-Prefer `pnpm` for builds from source. Bun is optional for running TypeScript directly.
-
-```bash
-pnpm install
-pnpm ui:build # auto-installs UI deps on first run
-pnpm build
-
-pnpm openclaw onboard --install-daemon
-
-# Dev loop (auto-reload on source/config changes)
-pnpm gateway:watch
-```
-
-Note: `pnpm openclaw ...` runs TypeScript directly (via `tsx`). `pnpm build` produces `dist/` for running via Node / the packaged `openclaw` binary.
-
----
 
 ## Demo: OpenClaw Improvements (Now with more sass 😈)
 

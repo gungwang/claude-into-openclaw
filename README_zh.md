@@ -477,21 +477,32 @@ OpenClaw 文档表明这些强大的基础已经存在：
 
 ---
 
-# 安装方式与原始 OpenClaw 相同
+# 安装方式与原始 (recommended)
+
+Runtime: **Node 24 (recommended) or Node 22.16+**.
 
 克隆仓库：
-
 ```bash
-git clone https://github.com/gungwang/claude-code-openclaw.git
-# The openclaw is a sub-directory of this project (Current Version 3.31).
-cd claude-code-openclaw/openclaw
+git clone https://github.com/gungwang/claude-into-openclaw.git
+cd claude-into-openclaw/openclaw
+
+pnpm install
+pnpm ui:build # auto-installs UI deps on first run
+pnpm build
+
+npm install -g .
+
+openclaw onboard --install-daemon
+
+# Dev loop (auto-reload on source/config changes)
+pnpm gateway:watch
 ```
+
+OpenClaw Onboard installs the Gateway daemon (launchd/systemd user service) so it stays running.
 
 ## 快速开始（TL;DR）
 
 运行时环境：**Node 24（推荐）或 Node 22.16+**。
-
-完整新手指南（认证、配对、频道）：[开始使用](https://docs.openclaw.ai/start/getting-started)
 
 ```bash
 openclaw onboard --install-daemon
@@ -505,8 +516,6 @@ openclaw message send --to +1234567890 --message "Hello from OpenClaw"
 openclaw agent --message "Ship checklist" --thinking high
 ```
 
-升级请参考：[更新指南](https://docs.openclaw.ai/install/updating)（并运行 `openclaw doctor`）。
-
 ## 开发频道
 
 - **stable**：带标签的正式发布版本（`vYYYY.M.D` 或 `vYYYY.M.D-<patch>`），npm dist-tag 为 `latest`。
@@ -514,22 +523,6 @@ openclaw agent --message "Ship checklist" --thinking high
 - **dev**：`main` 分支的最新开发头部，npm dist-tag 为 `dev`（发布时提供）。
 
 切换频道（git + npm）：`openclaw update --channel stable|beta|dev`。
-详情请见：[开发频道](https://docs.openclaw.ai/install/development-channels)。
-
-## 从源码运行（开发）
-
-从源码构建时推荐使用 `pnpm`。如果要直接运行 TypeScript，Bun 是可选项。
-
-```bash
-pnpm install
-pnpm ui:build # auto-installs UI deps on first run
-pnpm build
-
-pnpm openclaw onboard --install-daemon
-
-# Dev loop (auto-reload on source/config changes)
-pnpm gateway:watch
-```
 
 说明：`pnpm openclaw ...` 会直接运行 TypeScript（通过 `tsx`）。`pnpm build` 会产出 `dist/`，供通过 Node 或打包后的 `openclaw` 二进制运行。
 
