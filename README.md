@@ -28,11 +28,13 @@
 ---
 
 ## 🎉Hermes Agent Features integrated into OpenClaw🎉
+### Review PR for source code changes:
+- Dev.9: integrate the hermes-agent into openclaw project.#10
+- https://github.com/gungwang/claude-into-openclaw/pull/10/changes
+
 - YouTube Video: Claude Code, Hermes Agent, OpenClaw 整合 (三位一体)
 [![Claude Code, Hermes Agent, OpenClaw 整合 (三位一体)](https://img.youtube.com/vi/GIYJcpPxsQY/maxresdefault.jpg)](https://youtu.be/GIYJcpPxsQY)
 
-### Review PR for source code changes: Dev.9: integrate the hermes-agent into openclaw project.#10
-- https://github.com/gungwang/claude-into-openclaw/pull/10/changes
 
 Analyze the `hermes-agent` repository as an open-source AI coding agent framework and extract practical improvements for **OpenClaw** that are compatible with OpenClaw's current architecture. Identifies features absent from or significantly superior to OpenClaw's existing capabilities.
 
@@ -68,7 +70,8 @@ This specification identifies 7 improvement tracks that would bring hermes-agent
 
 ## 🎉Claude Features integrated into OpenClaw🎉
 
-### Review PR for source code changes: AB#dev.2: copy my version into a new repo for research and demo.#1
+### Review PR for source code changes:
+- AB#dev.2: copy my version into a new repo for research and demo.#1
 - https://github.com/gungwang/openclaw/pull/1/files
 
 - YouTube Video: AI-实战：如何把 Claude Code 放入到小龙虾 OpenClaw 中
