@@ -1,3 +1,4 @@
+import { createPolicyDecision } from "./policy-reason-codes.js";
 import { normalizeOptionalLowercaseString } from "../shared/string-coerce.js";
 import {
   expandToolGroups,
@@ -23,10 +24,18 @@ function wrapOwnerOnlyToolExecution(tool: AnyAgentTool, authorized: boolean): An
   if (tool.ownerOnly !== true || authorized || !tool.execute) {
     return tool;
   }
+  const toolName = tool.name;
   return {
     ...tool,
     execute: async () => {
-      throw new Error("Tool restricted to owner senders.");
+      const record = createPolicyDecision("auth:owner_only", "Tool restricted to owner senders.", {
+        toolName,
+      });
+      const error = new Error(record.message) as Error & {
+        policyDecisionRecord?: ReturnType<typeof createPolicyDecision>;
+      };
+      error.policyDecisionRecord = record;
+      throw error;
     },
   };
 }

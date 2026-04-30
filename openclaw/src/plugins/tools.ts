@@ -1,3 +1,4 @@
+import { deriveFallbackCanonicalToolId } from "../agents/tool-identity.js";
 import { normalizeToolName } from "../agents/tool-policy.js";
 import type { AnyAgentTool } from "../agents/tools/common.js";
 import { applyTestPluginDefaults, normalizePluginsConfig } from "./config-state.js";
@@ -16,6 +17,8 @@ import type { OpenClawPluginToolContext } from "./types.js";
 export type PluginToolMeta = {
   pluginId: string;
   optional: boolean;
+  canonicalIdHint?: string;
+  namespace?: "plugin";
 };
 
 const pluginToolMeta = new WeakMap<AnyAgentTool, PluginToolMeta>();

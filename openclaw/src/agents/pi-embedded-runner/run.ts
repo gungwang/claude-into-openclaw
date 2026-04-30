@@ -79,6 +79,13 @@ import {
 } from "../pi-embedded-helpers.js";
 import { resolveProviderIdForAuth } from "../provider-auth-aliases.js";
 import { runAgentCleanupStep } from "../run-cleanup-timeout.js";
+import {
+  recordCompactionEnd,
+  recordCompactionStart,
+  recordInboundMessage,
+  recordOutboundMessage,
+  recordRunError,
+} from "../journal-integration.js";
 import { buildAgentRuntimeAuthPlan } from "../runtime-plan/auth.js";
 import { buildAgentRuntimePlan } from "../runtime-plan/build.js";
 import { ensureRuntimePluginsLoaded } from "../runtime-plugins.js";
@@ -921,6 +928,12 @@ export async function runEmbeddedPiAgent(
         let accumulatedReplayState = createEmbeddedRunReplayState();
         // Hoisted so the retry-limit error path can use the most recent API total.
         let lastTurnTotal: number | undefined;
+
+        recordInboundMessage(params.journal, {
+          prompt: params.prompt,
+          correlationId: params.runId,
+        });
+
         while (true) {
           if (runLoopIterations >= MAX_RUN_LOOP_ITERATIONS) {
             const message =
@@ -931,6 +944,12 @@ export async function runEmbeddedPiAgent(
                 `provider=${provider}/${modelId} attempts=${runLoopIterations} ` +
                 `maxAttempts=${MAX_RUN_LOOP_ITERATIONS}`,
             );
+            recordRunError(params.journal, {
+              message,
+              provider,
+              model: modelId,
+              correlationId: params.runId,
+            });
             const retryLimitDecision = resolveRunFailoverDecision({
               stage: "retry_limit",
               fallbackConfigured,
@@ -1316,6 +1335,12 @@ export async function runEmbeddedPiAgent(
                 adoptCompactionTranscript(timeoutCompactResult);
               }
               await runOwnsCompactionAfterHook("timeout recovery", timeoutCompactResult);
+              recordCompactionEnd(params.journal, {
+                reason: "timeout recovery",
+                startedAt: compactionStartedAt,
+                success: timeoutCompactResult.compacted,
+                correlationId: timeoutDiagId,
+              });
               if (timeoutCompactResult.compacted) {
                 autoCompactionCount += 1;
                 if (
@@ -2494,6 +2519,14 @@ export async function runEmbeddedPiAgent(
             stopReason,
             yielded: attempt.yieldDetected === true,
           });
+          for (const payload of terminalPayloads ?? []) {
+            if (payload.text && payload.text !== SILENT_REPLY_TOKEN) {
+              recordOutboundMessage(params.journal, {
+                text: payload.text,
+                correlationId: params.runId,
+              });
+            }
+          }
           return {
             payloads: terminalPayloads?.length ? terminalPayloads : undefined,
             ...(attempt.diagnosticTrace
