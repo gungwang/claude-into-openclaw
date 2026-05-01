@@ -9,6 +9,10 @@ import { resolveOpenClawPluginToolsForOptions } from "./openclaw-plugin-tools.js
 import { applyNodesToolWorkspaceGuard } from "./openclaw-tools.nodes-workspace-guard.js";
 import {
   collectPresentOpenClawTools,
+  isAdvancedHomeAssistantEnabledForOpenClawTools,
+  isAdvancedMoaEnabledForOpenClawTools,
+  isAdvancedProcessMonitorEnabledForOpenClawTools,
+  isTrainingPipelineEnabledForOpenClawTools,
   isUpdatePlanToolEnabledForOpenClawTools,
 } from "./openclaw-tools.registration.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
@@ -23,9 +27,12 @@ import { createGatewayTool } from "./tools/gateway-tool.js";
 import { createImageGenerateTool } from "./tools/image-generate-tool.js";
 import { createImageTool } from "./tools/image-tool.js";
 import { createMessageTool } from "./tools/message-tool.js";
+import { createMixtureOfAgentsTool } from "./tools/mixture-of-agents-tool.js";
 import { createMusicGenerateTool } from "./tools/music-generate-tool.js";
 import { createNodesTool } from "./tools/nodes-tool.js";
+import { createHomeAssistantTools } from "./tools/homeassistant-tool.js";
 import { createPdfTool } from "./tools/pdf-tool.js";
+import { createProcessMonitorTools } from "./tools/process-monitor-tool.js";
 import { createSessionStatusTool } from "./tools/session-status-tool.js";
 import { createSessionsHistoryTool } from "./tools/sessions-history-tool.js";
 import { createSessionsListTool } from "./tools/sessions-list-tool.js";
@@ -33,6 +40,7 @@ import { createSessionsSendTool } from "./tools/sessions-send-tool.js";
 import { createSessionsSpawnTool } from "./tools/sessions-spawn-tool.js";
 import { createSessionsYieldTool } from "./tools/sessions-yield-tool.js";
 import { createSubagentsTool } from "./tools/subagents-tool.js";
+import { createTrainingPipelineTool } from "./tools/training-pipeline-tool.js";
 import { createTtsTool } from "./tools/tts-tool.js";
 import { createUpdatePlanTool } from "./tools/update-plan-tool.js";
 import { createVideoGenerateTool } from "./tools/video-generate-tool.js";
@@ -261,6 +269,37 @@ export function createOpenClawTools(
       agentId: sessionAgentId,
       agentAccountId: options?.agentAccountId,
     }),
+    ...(!embedded &&
+    isAdvancedProcessMonitorEnabledForOpenClawTools({ config: resolvedConfig })
+      ? createProcessMonitorTools({
+          config: resolvedConfig,
+          agentSessionKey: options?.agentSessionKey,
+        })
+      : []),
+    ...(!embedded &&
+    isAdvancedHomeAssistantEnabledForOpenClawTools({ config: resolvedConfig })
+      ? createHomeAssistantTools({
+          config: resolvedConfig,
+        })
+      : []),
+    ...(!embedded &&
+    isAdvancedMoaEnabledForOpenClawTools({ config: resolvedConfig })
+      ? [
+          createMixtureOfAgentsTool({
+            config: resolvedConfig,
+            agentSessionKey: options?.agentSessionKey,
+            agentId: sessionAgentId,
+          }),
+        ]
+      : []),
+    ...(!embedded &&
+    isTrainingPipelineEnabledForOpenClawTools({ config: resolvedConfig })
+      ? [
+          createTrainingPipelineTool({
+            config: resolvedConfig,
+          }),
+        ]
+      : []),
     ...collectPresentOpenClawTools([imageGenerateTool, musicGenerateTool, videoGenerateTool]),
     ...(embedded
       ? []

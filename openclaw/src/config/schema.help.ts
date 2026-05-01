@@ -196,6 +196,22 @@ export const FIELD_HELP: Record<string, string> = {
     "Enable hidden LLM extraction, storage, and heartbeat delivery for inferred follow-up commitments. Default: false.",
   "commitments.maxPerDay":
     "Maximum inferred follow-up commitments delivered per agent session in a rolling day. Default: 3.",
+  advancedTools:
+    "Advanced toolset feature-gates and defaults for browser automation, mixture-of-agents, TTS/voice, process monitoring, and Home Assistant integrations.",
+  "advancedTools.browserAutomation":
+    "Browser automation tool controls including provider selection, session limits, and URL allow/block filters.",
+  "advancedTools.mixtureOfAgents":
+    "Mixture-of-agents synthesis configuration for parallel reference models and aggregation behavior.",
+  "advancedTools.voiceTts":
+    "Text-to-speech provider and output defaults used by advanced voice tooling.",
+  "advancedTools.processMonitor":
+    "Background process monitor limits for managed process count, output buffering, and watcher throttling.",
+  "advancedTools.homeAssistant":
+    "Home Assistant tool connection settings, including URL/token and request timeout tuning.",
+  trainingPipeline:
+    "Training and evaluation pipeline settings for trajectories, benchmark runs, environment backends, and RL workflow defaults.",
+  "trainingPipeline.enabled":
+    "Top-level training pipeline feature gate; keep false/off until benchmark/training flows are intentionally enabled.",
   "agents.list.*.skills":
     "Optional allowlist of skills for this agent. If omitted, the agent inherits agents.defaults.skills when set; otherwise skills stay unrestricted. Set [] for no skills. An explicit list fully replaces inherited defaults instead of merging with them.",
   "agents.list[].skills":

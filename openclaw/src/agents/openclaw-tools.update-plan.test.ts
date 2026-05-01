@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
-import { isUpdatePlanToolEnabledForOpenClawTools } from "./openclaw-tools.registration.js";
+import {
+  isAdvancedHomeAssistantEnabledForOpenClawTools,
+  isAdvancedMoaEnabledForOpenClawTools,
+  isAdvancedProcessMonitorEnabledForOpenClawTools,
+  isTrainingPipelineEnabledForOpenClawTools,
+  isUpdatePlanToolEnabledForOpenClawTools,
+} from "./openclaw-tools.registration.js";
 import { createUpdatePlanTool } from "./tools/update-plan-tool.js";
 
 type UpdatePlanGatingParams = Parameters<typeof isUpdatePlanToolEnabledForOpenClawTools>[0];
@@ -192,5 +198,69 @@ describe("openclaw-tools update_plan gating", () => {
 
     expectUpdatePlanEnabled(openAiGpt5Params(cfg, { agentId: "main" }), false);
     expectUpdatePlanEnabled(openAiGpt5Params(cfg, { agentId: "research" }), true);
+  });
+});
+
+describe("openclaw-tools track E/G runtime gating helpers", () => {
+  it("keeps advanced process-monitor tools disabled by default", () => {
+    expect(isAdvancedProcessMonitorEnabledForOpenClawTools({ config: {} as OpenClawConfig })).toBe(
+      false,
+    );
+  });
+
+  it("enables advanced process-monitor tools only when explicitly turned on", () => {
+    const config = {
+      advancedTools: {
+        processMonitor: {
+          enabled: true,
+        },
+      },
+    } as OpenClawConfig;
+    expect(isAdvancedProcessMonitorEnabledForOpenClawTools({ config })).toBe(true);
+  });
+
+  it("keeps advanced home-assistant tools disabled by default", () => {
+    expect(isAdvancedHomeAssistantEnabledForOpenClawTools({ config: {} as OpenClawConfig })).toBe(
+      false,
+    );
+    expect(
+      isAdvancedHomeAssistantEnabledForOpenClawTools({
+        config: {
+          advancedTools: {
+            homeAssistant: {
+              enabled: true,
+            },
+          },
+        } as OpenClawConfig,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps advanced mixture-of-agents disabled unless explicitly enabled", () => {
+    expect(isAdvancedMoaEnabledForOpenClawTools({ config: {} as OpenClawConfig })).toBe(false);
+    expect(
+      isAdvancedMoaEnabledForOpenClawTools({
+        config: {
+          advancedTools: {
+            mixtureOfAgents: {
+              enabled: true,
+            },
+          },
+        } as OpenClawConfig,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps training pipeline disabled unless explicitly enabled", () => {
+    expect(isTrainingPipelineEnabledForOpenClawTools({ config: {} as OpenClawConfig })).toBe(false);
+    expect(
+      isTrainingPipelineEnabledForOpenClawTools({
+        config: {
+          trainingPipeline: {
+            enabled: true,
+          },
+        } as OpenClawConfig,
+      }),
+    ).toBe(true);
   });
 });

@@ -23621,6 +23621,575 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
         description:
           "Global MCP server definitions managed by OpenClaw. Embedded Pi and other runtime adapters can consume these servers without storing them inside Pi-owned project settings.",
       },
+      advancedTools: {
+        type: "object",
+        properties: {
+          browserAutomation: {
+            type: "object",
+            properties: {
+              enabled: {
+                type: "boolean",
+              },
+              provider: {
+                anyOf: [
+                  {
+                    type: "string",
+                    const: "playwright",
+                  },
+                  {
+                    type: "string",
+                    const: "puppeteer",
+                  },
+                  {
+                    type: "string",
+                    const: "external",
+                  },
+                ],
+              },
+              maxSessions: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              sessionTimeoutMs: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              navigationTimeoutMs: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              urlAllowPatterns: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              urlBlockPatterns: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              headless: {
+                type: "boolean",
+              },
+            },
+            additionalProperties: false,
+            title: "Advanced Tools Browser Automation",
+            description:
+              "Browser automation tool controls including provider selection, session limits, and URL allow/block filters.",
+          },
+          mixtureOfAgents: {
+            type: "object",
+            properties: {
+              enabled: {
+                type: "boolean",
+              },
+              referenceModels: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+              aggregatorModel: {
+                type: "string",
+              },
+              referenceTimeoutMs: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              minReferenceResponses: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              maxReferenceTokens: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+            },
+            additionalProperties: false,
+            title: "Advanced Tools Mixture of Agents",
+            description:
+              "Mixture-of-agents synthesis configuration for parallel reference models and aggregation behavior.",
+          },
+          voiceTts: {
+            type: "object",
+            properties: {
+              enabled: {
+                type: "boolean",
+              },
+              provider: {
+                anyOf: [
+                  {
+                    type: "string",
+                    const: "edge",
+                  },
+                  {
+                    type: "string",
+                    const: "elevenlabs",
+                  },
+                  {
+                    type: "string",
+                    const: "openai",
+                  },
+                  {
+                    type: "string",
+                    const: "minimax",
+                  },
+                  {
+                    type: "string",
+                    const: "generic",
+                  },
+                ],
+              },
+              defaultVoice: {
+                type: "string",
+              },
+              outputFormat: {
+                anyOf: [
+                  {
+                    type: "string",
+                    const: "mp3",
+                  },
+                  {
+                    type: "string",
+                    const: "wav",
+                  },
+                  {
+                    type: "string",
+                    const: "opus",
+                  },
+                  {
+                    type: "string",
+                    const: "flac",
+                  },
+                ],
+              },
+              sampleRate: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              apiKey: {
+                anyOf: [
+                  {
+                    type: "string",
+                  },
+                  {
+                    oneOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          source: {
+                            type: "string",
+                            const: "env",
+                          },
+                          provider: {
+                            type: "string",
+                            pattern: "^[a-z][a-z0-9_-]{0,63}$",
+                          },
+                          id: {
+                            type: "string",
+                            pattern: "^[A-Z][A-Z0-9_]{0,127}$",
+                          },
+                        },
+                        required: ["source", "provider", "id"],
+                        additionalProperties: false,
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          source: {
+                            type: "string",
+                            const: "file",
+                          },
+                          provider: {
+                            type: "string",
+                            pattern: "^[a-z][a-z0-9_-]{0,63}$",
+                          },
+                          id: {
+                            type: "string",
+                          },
+                        },
+                        required: ["source", "provider", "id"],
+                        additionalProperties: false,
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          source: {
+                            type: "string",
+                            const: "exec",
+                          },
+                          provider: {
+                            type: "string",
+                            pattern: "^[a-z][a-z0-9_-]{0,63}$",
+                          },
+                          id: {
+                            type: "string",
+                          },
+                        },
+                        required: ["source", "provider", "id"],
+                        additionalProperties: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+              apiBaseUrl: {
+                type: "string",
+              },
+            },
+            additionalProperties: false,
+            title: "Advanced Tools Voice TTS",
+            description:
+              "Text-to-speech provider and output defaults used by advanced voice tooling.",
+          },
+          processMonitor: {
+            type: "object",
+            properties: {
+              enabled: {
+                type: "boolean",
+              },
+              maxProcesses: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              outputBufferSize: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              killGracePeriodMs: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+              watchRateLimitMs: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+            },
+            additionalProperties: false,
+            title: "Advanced Tools Process Monitor",
+            description:
+              "Background process monitor limits for managed process count, output buffering, and watcher throttling.",
+          },
+          homeAssistant: {
+            type: "object",
+            properties: {
+              enabled: {
+                type: "boolean",
+              },
+              url: {
+                type: "string",
+              },
+              token: {
+                anyOf: [
+                  {
+                    type: "string",
+                  },
+                  {
+                    oneOf: [
+                      {
+                        type: "object",
+                        properties: {
+                          source: {
+                            type: "string",
+                            const: "env",
+                          },
+                          provider: {
+                            type: "string",
+                            pattern: "^[a-z][a-z0-9_-]{0,63}$",
+                          },
+                          id: {
+                            type: "string",
+                            pattern: "^[A-Z][A-Z0-9_]{0,127}$",
+                          },
+                        },
+                        required: ["source", "provider", "id"],
+                        additionalProperties: false,
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          source: {
+                            type: "string",
+                            const: "file",
+                          },
+                          provider: {
+                            type: "string",
+                            pattern: "^[a-z][a-z0-9_-]{0,63}$",
+                          },
+                          id: {
+                            type: "string",
+                          },
+                        },
+                        required: ["source", "provider", "id"],
+                        additionalProperties: false,
+                      },
+                      {
+                        type: "object",
+                        properties: {
+                          source: {
+                            type: "string",
+                            const: "exec",
+                          },
+                          provider: {
+                            type: "string",
+                            pattern: "^[a-z][a-z0-9_-]{0,63}$",
+                          },
+                          id: {
+                            type: "string",
+                          },
+                        },
+                        required: ["source", "provider", "id"],
+                        additionalProperties: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+              timeoutMs: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+            },
+            additionalProperties: false,
+            title: "Advanced Tools Home Assistant",
+            description:
+              "Home Assistant tool connection settings, including URL/token and request timeout tuning.",
+          },
+        },
+        additionalProperties: false,
+        title: "Advanced Tools",
+        description:
+          "Advanced toolset feature-gates and defaults for browser automation, mixture-of-agents, TTS/voice, process monitoring, and Home Assistant integrations.",
+      },
+      trainingPipeline: {
+        type: "object",
+        properties: {
+          enabled: {
+            type: "boolean",
+            title: "Training Pipeline Enabled",
+            description:
+              "Top-level training pipeline feature gate; keep false/off until benchmark/training flows are intentionally enabled.",
+          },
+          trajectory: {
+            type: "object",
+            properties: {
+              outputDir: {
+                type: "string",
+              },
+              maxTurnsPerTrajectory: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              filterEmptyToolCalls: {
+                type: "boolean",
+              },
+              filterRepetitive: {
+                type: "boolean",
+              },
+              minTurnLength: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9007199254740991,
+              },
+            },
+            additionalProperties: false,
+          },
+          distribution: {
+            type: "object",
+            properties: {
+              preset: {
+                type: "string",
+              },
+              custom: {
+                type: "object",
+                propertyNames: {
+                  type: "string",
+                },
+                additionalProperties: {
+                  type: "number",
+                },
+              },
+            },
+            additionalProperties: false,
+          },
+          batchRunner: {
+            type: "object",
+            properties: {
+              batchSize: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              maxWorkers: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              resumeEnabled: {
+                type: "boolean",
+              },
+              checkpointInterval: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+            },
+            additionalProperties: false,
+          },
+          environment: {
+            type: "object",
+            properties: {
+              defaultBackend: {
+                anyOf: [
+                  {
+                    type: "string",
+                    const: "local",
+                  },
+                  {
+                    type: "string",
+                    const: "docker",
+                  },
+                  {
+                    type: "string",
+                    const: "ssh",
+                  },
+                ],
+              },
+              docker: {
+                type: "object",
+                properties: {
+                  image: {
+                    type: "string",
+                  },
+                  extraFlags: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                  startupTimeoutMs: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                },
+                additionalProperties: false,
+              },
+              ssh: {
+                type: "object",
+                properties: {
+                  host: {
+                    type: "string",
+                  },
+                  port: {
+                    type: "integer",
+                    exclusiveMinimum: 0,
+                    maximum: 9007199254740991,
+                  },
+                  user: {
+                    type: "string",
+                  },
+                  keyPath: {
+                    type: "string",
+                  },
+                },
+                additionalProperties: false,
+              },
+            },
+            additionalProperties: false,
+          },
+          benchmark: {
+            type: "object",
+            properties: {
+              concurrency: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              taskTimeoutMs: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              testTimeoutMs: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              skipTasks: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+            },
+            additionalProperties: false,
+          },
+          rlCli: {
+            type: "object",
+            properties: {
+              model: {
+                type: "string",
+              },
+              baseUrl: {
+                type: "string",
+              },
+              maxIterations: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              saveTrajectories: {
+                type: "boolean",
+              },
+              toolsets: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+            },
+            additionalProperties: false,
+          },
+          parsers: {
+            type: "object",
+            properties: {
+              defaultParser: {
+                type: "string",
+              },
+              modelParserMap: {
+                type: "object",
+                propertyNames: {
+                  type: "string",
+                },
+                additionalProperties: {
+                  type: "string",
+                },
+              },
+            },
+            additionalProperties: false,
+          },
+        },
+        additionalProperties: false,
+        title: "Training Pipeline",
+        description:
+          "Training and evaluation pipeline settings for trajectories, benchmark runs, environment backends, and RL workflow defaults.",
+      },
       skills: {
         type: "object",
         properties: {
@@ -24390,6 +24959,46 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
       label: "Commitments per Day",
       help: "Maximum inferred follow-up commitments delivered per agent session in a rolling day. Default: 3.",
       tags: ["performance"],
+    },
+    advancedTools: {
+      label: "Advanced Tools",
+      help: "Advanced toolset feature-gates and defaults for browser automation, mixture-of-agents, TTS/voice, process monitoring, and Home Assistant integrations.",
+      tags: ["advanced"],
+    },
+    "advancedTools.browserAutomation": {
+      label: "Advanced Tools Browser Automation",
+      help: "Browser automation tool controls including provider selection, session limits, and URL allow/block filters.",
+      tags: ["advanced"],
+    },
+    "advancedTools.mixtureOfAgents": {
+      label: "Advanced Tools Mixture of Agents",
+      help: "Mixture-of-agents synthesis configuration for parallel reference models and aggregation behavior.",
+      tags: ["advanced"],
+    },
+    "advancedTools.voiceTts": {
+      label: "Advanced Tools Voice TTS",
+      help: "Text-to-speech provider and output defaults used by advanced voice tooling.",
+      tags: ["media"],
+    },
+    "advancedTools.processMonitor": {
+      label: "Advanced Tools Process Monitor",
+      help: "Background process monitor limits for managed process count, output buffering, and watcher throttling.",
+      tags: ["advanced"],
+    },
+    "advancedTools.homeAssistant": {
+      label: "Advanced Tools Home Assistant",
+      help: "Home Assistant tool connection settings, including URL/token and request timeout tuning.",
+      tags: ["advanced"],
+    },
+    trainingPipeline: {
+      label: "Training Pipeline",
+      help: "Training and evaluation pipeline settings for trajectories, benchmark runs, environment backends, and RL workflow defaults.",
+      tags: ["advanced"],
+    },
+    "trainingPipeline.enabled": {
+      label: "Training Pipeline Enabled",
+      help: "Top-level training pipeline feature gate; keep false/off until benchmark/training flows are intentionally enabled.",
+      tags: ["advanced"],
     },
     "diagnostics.enabled": {
       label: "Diagnostics Enabled",
@@ -29067,6 +29676,14 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
       sensitive: true,
       tags: ["security"],
     },
+    "advancedTools.voiceTts.apiKey": {
+      sensitive: true,
+      tags: ["security", "auth", "media"],
+    },
+    "advancedTools.homeAssistant.token": {
+      sensitive: true,
+      tags: ["security", "auth"],
+    },
     "skills.entries.*.apiKey": {
       sensitive: true,
       tags: ["security", "auth"],
@@ -29124,6 +29741,9 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
       tags: ["media", "tools", "url-secret"],
     },
     "mcp.servers.*.url": {
+      tags: ["advanced", "url-secret"],
+    },
+    "trainingPipeline.rlCli.baseUrl": {
       tags: ["advanced", "url-secret"],
     },
   },

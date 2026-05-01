@@ -64,6 +64,10 @@ vi.mock("./tools/message-tool.js", () => ({
   createMessageTool: () => mocks.stubTool("message"),
 }));
 
+vi.mock("./tools/mixture-of-agents-tool.js", () => ({
+  createMixtureOfAgentsTool: () => mocks.stubTool("mixture_of_agents"),
+}));
+
 vi.mock("./tools/music-generate-tool.js", () => ({
   createMusicGenerateTool: () => mocks.stubTool("music_generate"),
 }));
@@ -102,6 +106,10 @@ vi.mock("./tools/sessions-yield-tool.js", () => ({
 
 vi.mock("./tools/subagents-tool.js", () => ({
   createSubagentsTool: () => mocks.stubTool("subagents"),
+}));
+
+vi.mock("./tools/training-pipeline-tool.js", () => ({
+  createTrainingPipelineTool: () => mocks.stubTool("training_pipeline"),
 }));
 
 vi.mock("./tools/update-plan-tool.js", () => ({
@@ -245,6 +253,154 @@ describe("createOpenClawTools TTS config wiring", () => {
     } finally {
       __testing.setDepsForTest();
     }
+  });
+});
+
+describe("createOpenClawTools advanced process-monitor gating", () => {
+  beforeEach(async () => {
+    const { __testing } = await import("./tools/process-monitor-tool.js");
+    __testing.resetProcessMonitorSingleton();
+  });
+
+  it("does not register process-monitor tools by default", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).not.toContain("process_spawn");
+    expect(names).not.toContain("process_poll");
+    expect(names).not.toContain("process_kill");
+    expect(names).not.toContain("process_list");
+  });
+
+  it("registers process-monitor tools when advancedTools.processMonitor is enabled", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      config: {
+        advancedTools: {
+          processMonitor: {
+            enabled: true,
+            maxProcesses: 4,
+            outputBufferSize: 32_000,
+          },
+        },
+      } satisfies OpenClawConfig,
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).toContain("process_spawn");
+    expect(names).toContain("process_poll");
+    expect(names).toContain("process_kill");
+    expect(names).toContain("process_list");
+  });
+});
+
+describe("createOpenClawTools advanced home-assistant gating", () => {
+  beforeEach(async () => {
+    const { __testing } = await import("./tools/homeassistant-tool.js");
+    __testing.resetHomeAssistantClientSingleton();
+  });
+
+  it("does not register home-assistant tools by default", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).not.toContain("ha_list_entities");
+    expect(names).not.toContain("ha_get_state");
+    expect(names).not.toContain("ha_list_services");
+    expect(names).not.toContain("ha_call_service");
+  });
+
+  it("registers home-assistant tools when advancedTools.homeAssistant is enabled", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      config: {
+        advancedTools: {
+          homeAssistant: {
+            enabled: true,
+            url: "http://homeassistant.local:8123",
+            token: "test-token",
+          },
+        },
+      } satisfies OpenClawConfig,
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).toContain("ha_list_entities");
+    expect(names).toContain("ha_get_state");
+    expect(names).toContain("ha_list_services");
+    expect(names).toContain("ha_call_service");
+  });
+});
+
+describe("createOpenClawTools advanced mixture-of-agents gating", () => {
+  it("does not register mixture_of_agents by default", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).not.toContain("mixture_of_agents");
+  });
+
+  it("registers mixture_of_agents when advancedTools.mixtureOfAgents is enabled", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      config: {
+        advancedTools: {
+          mixtureOfAgents: {
+            enabled: true,
+          },
+        },
+      } satisfies OpenClawConfig,
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).toContain("mixture_of_agents");
+  });
+});
+
+describe("createOpenClawTools training pipeline gating", () => {
+  it("does not register training_pipeline by default", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).not.toContain("training_pipeline");
+  });
+
+  it("registers training_pipeline when trainingPipeline.enabled is true", async () => {
+    const { createOpenClawTools } = await import("./openclaw-tools.js");
+
+    const names = createOpenClawTools({
+      config: {
+        trainingPipeline: {
+          enabled: true,
+        },
+      } satisfies OpenClawConfig,
+      disableMessageTool: true,
+      disablePluginTools: true,
+    }).map((tool) => tool.name);
+
+    expect(names).toContain("training_pipeline");
   });
 });
 

@@ -327,6 +327,66 @@ describe("config schema", () => {
     });
   });
 
+  it("accepts advancedTools config in the runtime zod schema", () => {
+    const parsed = OpenClawSchema.parse({
+      advancedTools: {
+        browserAutomation: {
+          enabled: true,
+          provider: "playwright",
+          maxSessions: 2,
+        },
+        voiceTts: {
+          enabled: true,
+          provider: "edge",
+          outputFormat: "mp3",
+        },
+      },
+    });
+
+    expect(parsed.advancedTools?.browserAutomation).toMatchObject({
+      enabled: true,
+      provider: "playwright",
+      maxSessions: 2,
+    });
+    expect(parsed.advancedTools?.voiceTts?.outputFormat).toBe("mp3");
+  });
+
+  it("accepts trainingPipeline config in the runtime zod schema", () => {
+    const parsed = OpenClawSchema.parse({
+      trainingPipeline: {
+        enabled: true,
+        trajectory: {
+          outputDir: "./trajectories",
+          maxTurnsPerTrajectory: 100,
+        },
+        benchmark: {
+          concurrency: 2,
+          taskTimeoutMs: 60_000,
+        },
+      },
+    });
+
+    expect(parsed.trainingPipeline?.enabled).toBe(true);
+    expect(parsed.trainingPipeline?.trajectory).toMatchObject({
+      outputDir: "./trajectories",
+      maxTurnsPerTrajectory: 100,
+    });
+    expect(parsed.trainingPipeline?.benchmark?.concurrency).toBe(2);
+  });
+
+  it("rejects unknown keys in advancedTools config", () => {
+    expect(() =>
+      OpenClawSchema.parse({
+        advancedTools: {
+          voiceTts: {
+            enabled: true,
+            nope: true,
+          },
+        },
+      }),
+    ).toThrow();
+  });
+
   it("rejects allowPrivateNetwork on media-understanding request config", () => {
     expect(() =>
       ToolsSchema.parse({

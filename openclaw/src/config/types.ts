@@ -36,3 +36,17 @@ export * from "./types.tools.js";
 export * from "./types.whatsapp.js";
 export * from "./types.memory.js";
 export * from "./types.mcp.js";
+export * from "./types.session-intelligence.js";
+export * from "./types.supply-chain-security.js";
+export * from "./types.developer-experience.js";
+export * from "./types.plugin-enhancements.js";
+export type {
+  AdvancedToolsConfig,
+  BrowserAutomationConfig,
+  HomeAssistantToolsConfig,
+  MixtureOfAgentsConfig,
+  ProcessMonitorConfig,
+  VoiceTtsConfig,
+} from "./types.advanced-tools.js";
+export * from "./types.gateway-expansion.js";
+export * from "./types.training-pipeline.js";

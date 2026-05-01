@@ -27,3 +27,27 @@ export function isUpdatePlanToolEnabledForOpenClawTools(params: {
     modelId: params.modelId,
   });
 }
+
+export function isAdvancedProcessMonitorEnabledForOpenClawTools(params: {
+  config?: OpenClawConfig;
+}): boolean {
+  return params.config?.advancedTools?.processMonitor?.enabled === true;
+}
+
+export function isAdvancedHomeAssistantEnabledForOpenClawTools(params: {
+  config?: OpenClawConfig;
+}): boolean {
+  return params.config?.advancedTools?.homeAssistant?.enabled === true;
+}
+
+export function isAdvancedMoaEnabledForOpenClawTools(params: {
+  config?: OpenClawConfig;
+}): boolean {
+  return params.config?.advancedTools?.mixtureOfAgents?.enabled === true;
+}
+
+export function isTrainingPipelineEnabledForOpenClawTools(params: {
+  config?: OpenClawConfig;
+}): boolean {
+  return params.config?.trainingPipeline?.enabled === true;
+}

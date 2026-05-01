@@ -5,6 +5,7 @@ import type { ThinkLevel, VerboseLevel } from "../../auto-reply/thinking.js";
 import { resolveSessionTranscriptFile } from "../../config/sessions/transcript.js";
 import type { SessionEntry } from "../../config/sessions/types.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
+import { createRunJournal } from "../journal-integration.js";
 import { emitAgentEvent } from "../../infra/agent-events.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
 import { annotateInterSessionPromptText } from "../../sessions/input-provenance.js";
@@ -22,6 +23,7 @@ import { isCliRuntimeAlias, resolveCliRuntimeExecutionProvider } from "../model-
 import { isCliProvider } from "../model-selection.js";
 import { prepareSessionManagerForRun } from "../pi-embedded-runner/session-manager-init.js";
 import { runEmbeddedPiAgent, type EmbeddedPiRunResult } from "../pi-embedded.js";
+import { registerSessionJournal } from "../session-journal-registry.js";
 import { buildAgentRuntimeAuthPlan } from "../runtime-plan/auth.js";
 import { buildWorkspaceSkillSnapshot } from "../skills.js";
 import { buildUsageWithNoCost } from "../stream-message-shared.js";
@@ -544,6 +546,14 @@ export function runAgentAttempt(params: {
     });
   }
 
+  const journalSessionKey = params.sessionKey ?? params.sessionId;
+  const journal = createRunJournal({
+    sessionKey: journalSessionKey,
+    agentId: params.sessionAgentId,
+    runId: params.runId,
+  });
+  registerSessionJournal(journalSessionKey, journal);
+
   return runEmbeddedPiAgent({
     sessionId: params.sessionId,
     sessionKey: params.sessionKey,
@@ -579,6 +589,7 @@ export function runAgentAttempt(params: {
     verboseLevel: params.resolvedVerboseLevel,
     timeoutMs: params.timeoutMs,
     runId: params.runId,
+    journal,
     lane: params.opts.lane,
     abortSignal: params.opts.abortSignal,
     extraSystemPrompt: params.opts.extraSystemPrompt,

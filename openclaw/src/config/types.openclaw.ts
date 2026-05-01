@@ -9,6 +9,7 @@ import type { AuthConfig } from "./types.auth.js";
 import type { DiagnosticsConfig, LoggingConfig, SessionConfig, WebConfig } from "./types.base.js";
 import type { BrowserConfig } from "./types.browser.js";
 import type { ChannelsConfig } from "./types.channels.js";
+import type { DeveloperExperienceConfig } from "./types.developer-experience.js";
 import type { CliConfig } from "./types.cli.js";
 import type { CommitmentsConfig } from "./types.commitments.js";
 import type { CrestodianConfig } from "./types.crestodian.js";
@@ -31,10 +32,16 @@ import type {
 import type { ModelsConfig } from "./types.models.js";
 import type { NodeHostConfig } from "./types.node-host.js";
 import type { PluginsConfig } from "./types.plugins.js";
+import type { PluginEnhancementsConfig } from "./types.plugin-enhancements.js";
 import type { SecretsConfig } from "./types.secrets.js";
+import type { SessionIntelligenceConfig } from "./types.session-intelligence.js";
 import type { SkillsConfig } from "./types.skills.js";
+import type { SupplyChainSecurityConfig } from "./types.supply-chain-security.js";
 import type { ToolsConfig } from "./types.tools.js";
+import type { TrainingPipelineConfig } from "./types.training-pipeline.js";
 import type { ProxyConfig } from "./zod-schema.proxy.js";
+import type { AdvancedToolsConfig } from "./types.advanced-tools.js";
+import type { GatewayExpansionConfig } from "./types.gateway-expansion.js";
 
 export type SurfaceConfigEntry = {
   silentReply?: SilentReplyPolicyShape;
@@ -138,6 +145,20 @@ export type OpenClawConfig = {
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
   mcp?: McpConfig;
+  /** Hermes-derived Track A config: persistence, failover classification, and smart routing. */
+  sessionIntelligence?: SessionIntelligenceConfig;
+  /** Hermes-derived Track B config: install-time scanning and path/url hardening. */
+  supplyChainSecurity?: SupplyChainSecurityConfig;
+  /** Hermes-derived Track C config: worktree, cache, references, budgets, checkpoints. */
+  developerExperience?: DeveloperExperienceConfig;
+  /** Hermes-derived Track D config: plugin hook bus, context-engine, and message injection controls. */
+  pluginEnhancements?: PluginEnhancementsConfig;
+  /** Hermes-derived Track E config: browser/MoA/TTS/process monitor/home-assistant tools. */
+  advancedTools?: AdvancedToolsConfig;
+  /** Hermes-derived Track F config: enterprise gateway adapters and multi-destination delivery. */
+  gatewayExpansion?: GatewayExpansionConfig;
+  /** Hermes-derived Track G config: trajectories, distributions, benchmarks, and RL helpers. */
+  trainingPipeline?: TrainingPipelineConfig;
   /** Network-level SSRF protection via an operator-managed forward proxy. */
   proxy?: ProxyConfig;
 };

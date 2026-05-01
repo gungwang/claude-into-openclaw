@@ -262,6 +262,163 @@ const CommitmentsSchema = z
   .strict()
   .optional();
 
+const AdvancedToolsSchema = z
+  .object({
+    browserAutomation: z
+      .object({
+        enabled: z.boolean().optional(),
+        provider: z
+          .union([z.literal("playwright"), z.literal("puppeteer"), z.literal("external")])
+          .optional(),
+        maxSessions: z.number().int().positive().optional(),
+        sessionTimeoutMs: z.number().int().positive().optional(),
+        navigationTimeoutMs: z.number().int().positive().optional(),
+        urlAllowPatterns: z.array(z.string()).optional(),
+        urlBlockPatterns: z.array(z.string()).optional(),
+        headless: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
+    mixtureOfAgents: z
+      .object({
+        enabled: z.boolean().optional(),
+        referenceModels: z.array(z.string()).optional(),
+        aggregatorModel: z.string().optional(),
+        referenceTimeoutMs: z.number().int().positive().optional(),
+        minReferenceResponses: z.number().int().positive().optional(),
+        maxReferenceTokens: z.number().int().positive().optional(),
+      })
+      .strict()
+      .optional(),
+    voiceTts: z
+      .object({
+        enabled: z.boolean().optional(),
+        provider: z
+          .union([
+            z.literal("edge"),
+            z.literal("elevenlabs"),
+            z.literal("openai"),
+            z.literal("minimax"),
+            z.literal("generic"),
+          ])
+          .optional(),
+        defaultVoice: z.string().optional(),
+        outputFormat: z
+          .union([z.literal("mp3"), z.literal("wav"), z.literal("opus"), z.literal("flac")])
+          .optional(),
+        sampleRate: z.number().int().positive().optional(),
+        apiKey: SecretInputSchema.optional().register(sensitive),
+        apiBaseUrl: z.string().optional(),
+      })
+      .strict()
+      .optional(),
+    processMonitor: z
+      .object({
+        enabled: z.boolean().optional(),
+        maxProcesses: z.number().int().positive().optional(),
+        outputBufferSize: z.number().int().positive().optional(),
+        killGracePeriodMs: z.number().int().nonnegative().optional(),
+        watchRateLimitMs: z.number().int().nonnegative().optional(),
+      })
+      .strict()
+      .optional(),
+    homeAssistant: z
+      .object({
+        enabled: z.boolean().optional(),
+        url: z.string().optional(),
+        token: SecretInputSchema.optional().register(sensitive),
+        timeoutMs: z.number().int().positive().optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+  .optional();
+
+const TrainingPipelineSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    trajectory: z
+      .object({
+        outputDir: z.string().optional(),
+        maxTurnsPerTrajectory: z.number().int().positive().optional(),
+        filterEmptyToolCalls: z.boolean().optional(),
+        filterRepetitive: z.boolean().optional(),
+        minTurnLength: z.number().int().nonnegative().optional(),
+      })
+      .strict()
+      .optional(),
+    distribution: z
+      .object({
+        preset: z.string().optional(),
+        custom: z.record(z.string(), z.number()).optional(),
+      })
+      .strict()
+      .optional(),
+    batchRunner: z
+      .object({
+        batchSize: z.number().int().positive().optional(),
+        maxWorkers: z.number().int().positive().optional(),
+        resumeEnabled: z.boolean().optional(),
+        checkpointInterval: z.number().int().positive().optional(),
+      })
+      .strict()
+      .optional(),
+    environment: z
+      .object({
+        defaultBackend: z
+          .union([z.literal("local"), z.literal("docker"), z.literal("ssh")])
+          .optional(),
+        docker: z
+          .object({
+            image: z.string().optional(),
+            extraFlags: z.array(z.string()).optional(),
+            startupTimeoutMs: z.number().int().positive().optional(),
+          })
+          .strict()
+          .optional(),
+        ssh: z
+          .object({
+            host: z.string().optional(),
+            port: z.number().int().positive().optional(),
+            user: z.string().optional(),
+            keyPath: z.string().optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
+    benchmark: z
+      .object({
+        concurrency: z.number().int().positive().optional(),
+        taskTimeoutMs: z.number().int().positive().optional(),
+        testTimeoutMs: z.number().int().positive().optional(),
+        skipTasks: z.array(z.string()).optional(),
+      })
+      .strict()
+      .optional(),
+    rlCli: z
+      .object({
+        model: z.string().optional(),
+        baseUrl: z.string().optional(),
+        maxIterations: z.number().int().positive().optional(),
+        saveTrajectories: z.boolean().optional(),
+        toolsets: z.array(z.string()).optional(),
+      })
+      .strict()
+      .optional(),
+    parsers: z
+      .object({
+        defaultParser: z.string().optional(),
+        modelParserMap: z.record(z.string(), z.string()).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+  .optional();
+
 export const OpenClawSchema = z
   .object({
     $schema: z.string().optional(),
@@ -983,6 +1140,8 @@ export const OpenClawSchema = z
       .optional(),
     memory: MemorySchema,
     mcp: McpConfigSchema,
+    advancedTools: AdvancedToolsSchema,
+    trainingPipeline: TrainingPipelineSchema,
     skills: z
       .object({
         allowBundled: z.array(z.string()).optional(),

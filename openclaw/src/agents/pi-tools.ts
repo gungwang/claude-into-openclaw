@@ -57,6 +57,14 @@ import {
   EXEC_TOOL_DISPLAY_SUMMARY,
   PROCESS_TOOL_DISPLAY_SUMMARY,
 } from "./tool-description-presets.js";
+import {
+  deriveFallbackCanonicalToolId,
+  findAmbiguousDisplayNames,
+  findDuplicateCanonicalIds,
+  inferCapabilityClassFromToolName,
+  normalizeCanonicalToolId,
+  type CanonicalToolIdentity,
+} from "./tool-identity.js";
 import { createToolFsPolicy, resolveToolFsConfig } from "./tool-fs-policy.js";
 import {
   applyToolPolicyPipeline,
@@ -77,6 +85,8 @@ function isOpenAIProvider(provider?: string) {
 }
 
 const MEMORY_FLUSH_ALLOWED_TOOL_NAMES = new Set(["read", "write"]);
+const TOOL_IDENTITY_WARNING_CACHE_MAX = 256;
+const toolIdentityWarningCache = new Set<string>();
 
 type BashToolsModule = typeof import("./bash-tools.js");
 
@@ -249,12 +259,67 @@ export function resolveToolLoopDetectionConfig(params: {
   };
 }
 
+function warnToolIdentityOnce(message: string): void {
+  if (toolIdentityWarningCache.has(message)) {
+    return;
+  }
+  if (toolIdentityWarningCache.size >= TOOL_IDENTITY_WARNING_CACHE_MAX) {
+    const oldest = toolIdentityWarningCache.keys().next().value;
+    if (typeof oldest === "string") {
+      toolIdentityWarningCache.delete(oldest);
+    }
+  }
+  toolIdentityWarningCache.add(message);
+  logWarn(message);
+}
+
+function buildCanonicalIdentities(tools: AnyAgentTool[]): CanonicalToolIdentity[] {
+  return tools.map((tool) => {
+    const meta = getPluginToolMeta(tool);
+    const namespace = meta?.namespace ?? "core";
+    const fallbackId = deriveFallbackCanonicalToolId({
+      namespace,
+      toolName: tool.name,
+      pluginId: meta?.pluginId,
+    });
+    const id = normalizeCanonicalToolId(meta?.canonicalIdHint ?? fallbackId);
+    const displayName = tool.label?.trim() || tool.name;
+    return {
+      id,
+      displayName,
+      namespace,
+      capabilityClass: inferCapabilityClassFromToolName(tool.name),
+    };
+  });
+}
+
+function emitCanonicalIdentityDiagnostics(identities: CanonicalToolIdentity[]): void {
+  const duplicateIds = findDuplicateCanonicalIds(identities);
+  for (const duplicate of duplicateIds) {
+    const entries = duplicate.entries
+      .map((entry) => `${entry.namespace}/${entry.displayName}`)
+      .join(", ");
+    warnToolIdentityOnce(
+      `tools.identity duplicate canonical id "${duplicate.id}" across: ${entries}`,
+    );
+  }
+
+  const ambiguousNames = findAmbiguousDisplayNames(identities);
+  for (const ambiguous of ambiguousNames) {
+    warnToolIdentityOnce(
+      `tools.identity ambiguous display name "${ambiguous.displayName}" maps to ids: ${ambiguous.ids.join(", ")}`,
+    );
+  }
+}
+
 export const __testing = {
   cleanToolSchemaForGemini,
   getToolParamsRecord,
   wrapToolParamValidation,
   assertRequiredParams,
   applyModelProviderToolPolicy,
+  buildCanonicalIdentities,
+  emitCanonicalIdentityDiagnostics,
 } as const;
 
 export function createOpenClawCodingTools(options?: {
@@ -739,6 +804,7 @@ export function createOpenClawCodingTools(options?: {
   const withDeferredFollowupDescriptions = applyDeferredFollowupToolDescriptions(withAbort, {
     agentId,
   });
+  emitCanonicalIdentityDiagnostics(buildCanonicalIdentities(withDeferredFollowupDescriptions));
 
   // NOTE: Keep canonical (lowercase) tool names here.
   // pi-ai's Anthropic OAuth transport remaps tool names to Claude Code-style names
