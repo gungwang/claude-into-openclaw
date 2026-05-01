@@ -38,10 +38,15 @@ import {
   formatJournalTimeline,
   exportJournalAsJson,
   filterJournalEvents,
-  type SessionEventJournal,
   type JournalEventType,
   type JournalEventSeverity,
 } from "../../agents/session-event-journal.js";
+import {
+  clearAllSessionJournals,
+  getSessionJournal,
+  registerSessionJournal,
+  removeSessionJournal,
+} from "../../agents/session-journal-registry.js";
 import { loadConfig } from "../../config/config.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import type { GatewayRequestHandlers, RespondFn } from "./types.js";
@@ -145,10 +150,8 @@ export const toolsDiagnosticHandlers: GatewayRequestHandlers = {
         ...buildDefaultToolPolicyPipelineSteps({
           profilePolicy: profilePolicyWithAlsoAllow,
           profile,
-          profileAlsoAllow,
           providerProfilePolicy: providerProfilePolicyWithAlsoAllow,
           providerProfile,
-          providerProfileAlsoAllow,
           globalPolicy,
           globalProviderPolicy,
           agentPolicy,
@@ -290,31 +293,9 @@ export const toolsDiagnosticHandlers: GatewayRequestHandlers = {
   },
 };
 
-// ── Session journal registry ──
-// In-memory registry for active session journals.
-// Journals are registered by the run loop and cleaned up on session end.
-
-const activeJournals = new Map<string, SessionEventJournal>();
-const MAX_JOURNAL_ENTRIES = 100;
-
-export function registerSessionJournal(sessionKey: string, journal: SessionEventJournal): void {
-  if (activeJournals.size >= MAX_JOURNAL_ENTRIES) {
-    const oldest = activeJournals.keys().next().value;
-    if (oldest) {
-      activeJournals.delete(oldest);
-    }
-  }
-  activeJournals.set(sessionKey, journal);
-}
-
-export function getSessionJournal(sessionKey: string): SessionEventJournal | undefined {
-  return activeJournals.get(sessionKey);
-}
-
-export function removeSessionJournal(sessionKey: string): boolean {
-  return activeJournals.delete(sessionKey);
-}
-
-export function clearAllSessionJournals(): void {
-  activeJournals.clear();
-}
+export {
+  registerSessionJournal,
+  getSessionJournal,
+  removeSessionJournal,
+  clearAllSessionJournals,
+};

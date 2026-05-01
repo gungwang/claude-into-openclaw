@@ -1,3 +1,7 @@
+import type {
+  SilentReplyPolicyShape,
+  SilentReplyRewriteShape,
+} from "../shared/silent-reply-policy.js";
 import type { AcpConfig } from "./types.acp.js";
 import type { AgentBinding, AgentsConfig } from "./types.agents.js";
 import type { ApprovalsConfig } from "./types.approvals.js";
@@ -5,7 +9,10 @@ import type { AuthConfig } from "./types.auth.js";
 import type { DiagnosticsConfig, LoggingConfig, SessionConfig, WebConfig } from "./types.base.js";
 import type { BrowserConfig } from "./types.browser.js";
 import type { ChannelsConfig } from "./types.channels.js";
+import type { DeveloperExperienceConfig } from "./types.developer-experience.js";
 import type { CliConfig } from "./types.cli.js";
+import type { CommitmentsConfig } from "./types.commitments.js";
+import type { CrestodianConfig } from "./types.crestodian.js";
 import type { CronConfig } from "./types.cron.js";
 import type {
   CanvasHostConfig,
@@ -25,18 +32,24 @@ import type {
 import type { ModelsConfig } from "./types.models.js";
 import type { NodeHostConfig } from "./types.node-host.js";
 import type { PluginsConfig } from "./types.plugins.js";
+import type { PluginEnhancementsConfig } from "./types.plugin-enhancements.js";
 import type { SecretsConfig } from "./types.secrets.js";
 import type { SessionIntelligenceConfig } from "./types.session-intelligence.js";
 import type { SkillsConfig } from "./types.skills.js";
 import type { SupplyChainSecurityConfig } from "./types.supply-chain-security.js";
-import type { DeveloperExperienceConfig } from "./types.developer-experience.js";
-import type { PluginEnhancementsConfig } from "./types.plugin-enhancements.js";
+import type { ToolsConfig } from "./types.tools.js";
+import type { TrainingPipelineConfig } from "./types.training-pipeline.js";
+import type { ProxyConfig } from "./zod-schema.proxy.js";
 import type { AdvancedToolsConfig } from "./types.advanced-tools.js";
 import type { GatewayExpansionConfig } from "./types.gateway-expansion.js";
-import type { TrainingPipelineConfig } from "./types.training-pipeline.js";
-import type { ToolsConfig } from "./types.tools.js";
+
+export type SurfaceConfigEntry = {
+  silentReply?: SilentReplyPolicyShape;
+  silentReplyRewrite?: SilentReplyRewriteShape;
+};
 
 export type OpenClawConfig = {
+  $schema?: string;
   meta?: {
     /** Last OpenClaw version that wrote this config. */
     lastTouchedVersion?: string;
@@ -71,6 +84,7 @@ export type OpenClawConfig = {
   diagnostics?: DiagnosticsConfig;
   logging?: LoggingConfig;
   cli?: CliConfig;
+  crestodian?: CrestodianConfig;
   update?: {
     /** Update channel for git + npm installs ("stable", "beta", or "dev"). */
     channel?: "stable" | "beta" | "dev";
@@ -102,6 +116,7 @@ export type OpenClawConfig = {
   secrets?: SecretsConfig;
   skills?: SkillsConfig;
   plugins?: PluginsConfig;
+  surfaces?: Record<string, SurfaceConfigEntry>;
   models?: ModelsConfig;
   nodeHost?: NodeHostConfig;
   agents?: AgentsConfig;
@@ -122,6 +137,7 @@ export type OpenClawConfig = {
   web?: WebConfig;
   channels?: ChannelsConfig;
   cron?: CronConfig;
+  commitments?: CommitmentsConfig;
   hooks?: HooksConfig;
   discovery?: DiscoveryConfig;
   canvasHost?: CanvasHostConfig;
@@ -129,20 +145,22 @@ export type OpenClawConfig = {
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
   mcp?: McpConfig;
-  /** Session intelligence: persistence, error classification, credential rotation, rate-limit tracking, trajectory compression, smart routing. */
+  /** Hermes-derived Track A config: persistence, failover classification, and smart routing. */
   sessionIntelligence?: SessionIntelligenceConfig;
-  /** Supply-chain security: skills guard, manifest sync, URL safety, path security. */
+  /** Hermes-derived Track B config: install-time scanning and path/url hardening. */
   supplyChainSecurity?: SupplyChainSecurityConfig;
-  /** Developer experience: worktree isolation, prompt caching, context references, budget tracking, checkpoints. */
+  /** Hermes-derived Track C config: worktree, cache, references, budgets, checkpoints. */
   developerExperience?: DeveloperExperienceConfig;
-  /** Plugin enhancements: hook bus, context engine replacement, message injection, plugin toolsets. */
+  /** Hermes-derived Track D config: plugin hook bus, context-engine, and message injection controls. */
   pluginEnhancements?: PluginEnhancementsConfig;
-  /** Advanced tools: browser automation, mixture-of-agents, voice/TTS, process monitor, Home Assistant. */
+  /** Hermes-derived Track E config: browser/MoA/TTS/process monitor/home-assistant tools. */
   advancedTools?: AdvancedToolsConfig;
-  /** Gateway expansion: WeCom, DingTalk, Feishu, Mattermost, SMS, Email, Webhook, mirroring, multi-destination. */
+  /** Hermes-derived Track F config: enterprise gateway adapters and multi-destination delivery. */
   gatewayExpansion?: GatewayExpansionConfig;
-  /** Training pipeline: trajectory format, toolset distributions, batch runner, environments, benchmarks, RL CLI. */
+  /** Hermes-derived Track G config: trajectories, distributions, benchmarks, and RL helpers. */
   trainingPipeline?: TrainingPipelineConfig;
+  /** Network-level SSRF protection via an operator-managed forward proxy. */
+  proxy?: ProxyConfig;
 };
 
 declare const openClawConfigStateBrand: unique symbol;

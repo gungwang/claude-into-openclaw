@@ -9,6 +9,7 @@ export * from "./types.base.js";
 export * from "./types.browser.js";
 export * from "./types.channels.js";
 export * from "./types.cli.js";
+export * from "./types.commitments.js";
 export * from "./types.openclaw.js";
 export * from "./types.cron.js";
 export * from "./types.discord.js";
@@ -22,6 +23,7 @@ export * from "./types.models.js";
 export * from "./types.node-host.js";
 export * from "./types.msteams.js";
 export * from "./types.plugins.js";
+export * from "./types.provider-request.js";
 export * from "./types.queue.js";
 export * from "./types.sandbox.js";
 export * from "./types.secrets.js";
@@ -34,3 +36,17 @@ export * from "./types.tools.js";
 export * from "./types.whatsapp.js";
 export * from "./types.memory.js";
 export * from "./types.mcp.js";
+export * from "./types.session-intelligence.js";
+export * from "./types.supply-chain-security.js";
+export * from "./types.developer-experience.js";
+export * from "./types.plugin-enhancements.js";
+export type {
+  AdvancedToolsConfig,
+  BrowserAutomationConfig,
+  HomeAssistantToolsConfig,
+  MixtureOfAgentsConfig,
+  ProcessMonitorConfig,
+  VoiceTtsConfig,
+} from "./types.advanced-tools.js";
+export * from "./types.gateway-expansion.js";
+export * from "./types.training-pipeline.js";
